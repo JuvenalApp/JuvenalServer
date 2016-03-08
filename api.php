@@ -7,6 +7,8 @@ require 'exception.php';
 // Contains variable $connString for use with MySQLi
 require '../mysqli_conn.php';
 
+print "connString: {$connString}\n";
+
 $API_PATH = 'api';
 
 $mysqlCredentials = array();
