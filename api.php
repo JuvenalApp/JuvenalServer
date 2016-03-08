@@ -22,7 +22,13 @@ print_r($_SERVER);
 
 $method = $_SERVER['REQUEST_METHOD'];
 $pattern = '/^\/' . $API_PATH . '\/([a-z0-9]{40}|)\/?(\w+$|\w+(?=[\/]))\/?(.+)?/';
-list($apiPath, $filter) = explode('?', strtolower($_SERVER['REQUEST_URI']));
+
+if (strpos($_SERVER['REQUEST_URI'],"?") > 0) {
+    list($apiPath, $filter) = explode('?', strtolower($_SERVER['REQUEST_URI']));
+} else {
+    $apiPath = $_SERVER['REQUEST_URI'];
+    $filter = '';
+}
 
 /* Depending on server configuration,
    the path may or more not start with /
