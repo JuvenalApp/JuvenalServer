@@ -4,11 +4,14 @@ error_reporting(E_ALL);
 
 require 'exception.php';
 
-$API_PATH = '_dev';
+// Contains variable $connString for use with MySQLi
+require 'mysqli_conn.php';
+
+$API_PATH = 'api';
 
 $mysqlCredentials = array();
 
-foreach (explode(';', $_SERVER['MYSQLCONNSTR_defaultConnection']) as $entry) {
+foreach (explode(';', $connString) as $entry) {
     list($key, $value) = explode('=', $entry);
     $mysqlCredentials[$key] = $value;
 }
