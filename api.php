@@ -4,7 +4,6 @@ error_reporting(E_ALL);
 
 require 'exception.php';
 
-
 // Set connString to nothing to appease the IDE.
 // mysqli_conn sets the variable $connString for use with MySQLi
 $connString = '';
