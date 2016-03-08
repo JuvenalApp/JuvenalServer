@@ -18,8 +18,6 @@ foreach (explode(';', $connString) as $entry) {
     $mysqlCredentials[$key] = $value;
 }
 
-print_r($_SERVER);
-
 $method = $_SERVER['REQUEST_METHOD'];
 $pattern = '/^\/' . $API_PATH . '\/([a-z0-9]{40}|)\/?(\w+$|\w+(?=[\/]))\/?(.+)?/';
 
