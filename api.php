@@ -5,7 +5,7 @@ error_reporting(E_ALL);
 require 'exception.php';
 
 // Contains variable $connString for use with MySQLi
-require 'mysqli_conn.php';
+require '../mysqli_conn.php';
 
 $API_PATH = 'api';
 
