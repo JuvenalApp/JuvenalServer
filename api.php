@@ -4,10 +4,11 @@ error_reporting(E_ALL);
 
 require 'exception.php';
 
-// Contains variable $connString for use with MySQLi
-require '../mysqli_conn.php';
 
-print "connString: {$connString}\n";
+// Set connString to nothing to appease the IDE.
+// mysqli_conn sets the variable $connString for use with MySQLi
+$connString = '';
+require '../mysqli_conn.php';
 
 $API_PATH = 'api';
 
@@ -17,6 +18,8 @@ foreach (explode(';', $connString) as $entry) {
     list($key, $value) = explode('=', $entry);
     $mysqlCredentials[$key] = $value;
 }
+
+print_r($_SERVER);
 
 $method = $_SERVER['REQUEST_METHOD'];
 $pattern = '/^\/' . $API_PATH . '\/([a-z0-9]{40}|)\/?(\w+$|\w+(?=[\/]))\/?(.+)?/';
