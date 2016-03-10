@@ -409,7 +409,7 @@ function sendResponse($response, $code, $message='', $exitAfter=true) {
         }
     }
 
-    Header("HTTP/1.1 {$message} Created");
+    Header("HTTP/1.1 {$code} {$message}");
     Header("Content-type: application/json");
     print json_encode($response);
     if (!$exitAfter) {
