@@ -162,15 +162,18 @@ function api_EVENTS_PUT_ID ($id) {
 
 function api_EVENTS_POST_ID_ATTACHMENTS ($id) {
     if (!isset($id) || strlen($id) != 8) {
-        throw new BadRequestException();
+        $response['error'] = "No Session ID Provided";
+        sendResponse($response, 400);
     }
 
     if ($GLOBALS['apiKey'] != "d9cef133acdb2c35c21a20031a5dfc10f77d03f4") {
-        throw new BadRequestException();
+        $response['error'] = "Underpriviledged API Key";
+        sendResponse($response, 401);
     }
 
     if (empty($_FILES)) {
-        throw new BadRequestException("No file provided.");
+        $response['error'] = "No File to Upload";
+        sendResponse($response, 400);
     }
 
     foreach ($_FILES as $file) {
@@ -394,7 +397,7 @@ function generateApiKey($sessionId){
     return sha1($sessionId . microtime(true) . mt_rand(10000,90000));
 }
 
-function sendResponse($response, $code, $message='') {
+function sendResponse($response, $code, $message='', $exitAfter=true) {
     if ($message == '') {
         switch ($code) {
             case 201:
@@ -409,4 +412,7 @@ function sendResponse($response, $code, $message='') {
     Header("HTTP/1.1 {$message} Created");
     Header("Content-type: application/json");
     print json_encode($response);
+    if (!$exitAfter) {
+        exit();
+    }
 }
