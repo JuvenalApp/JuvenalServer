@@ -161,12 +161,7 @@ function api_EVENTS_PUT_ID ($id) {
 }
 
 function api_EVENTS_POST_ID_ATTACHMENTS ($id) {
-    // Reassure the debugger
-    if (!isset($id)) {
-        $id = '';
-    }
-    if (strlen($id) != 8) {
-        /** @noinspection PhpUndefinedClassInspection */
+    if (!isset($id) || strlen($id) != 8) {
         throw new BadRequestException();
     }
 
@@ -174,19 +169,19 @@ function api_EVENTS_POST_ID_ATTACHMENTS ($id) {
         throw new BadRequestException();
     }
 
-    if (!empty($_FILES)) {
-        foreach ($_FILES as $file) {
-            if ($file['error'] > 0) {
-                echo "Error: " . $file['error'];
-            } else {
-                Header("HTTP/1.1 201 Created");
-                $destination = getcwd() . '/up/' . $id . '_' . $file['name'];
-                move_uploaded_file($file['tmp_name'], $destination);
-                //chmod($destination, 0644);
-            }
+    if (empty($_FILES)) {
+        throw new BadRequestException("No file provided.");
+    }
+
+    foreach ($_FILES as $file) {
+        if ($file['error'] > 0) {
+            echo "Error: " . $file['error'];
+        } else {
+            Header("HTTP/1.1 201 Created");
+            $destination = getcwd() . '/up/' . $id . '_' . $file['name'];
+            move_uploaded_file($file['tmp_name'], $destination);
+            //chmod($destination, 0644);
         }
-    } else {
-        print "No file\n";
     }
 }
 
