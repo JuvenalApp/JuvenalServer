@@ -167,7 +167,6 @@ function api_EVENTS_POST()
         /** @noinspection PhpMissingBreakStatementInspection */
         case 2:
             $object2 = $GLOBALS['path'][1];
-            $
         case 1:
             $session = $GLOBALS['path'][0];
             break;
