@@ -101,6 +101,8 @@ exit();
 function api_EVENTS_GET()
 {
 
+    print_r(__FUNCTION__);
+
 //    if (!($result = $GLOBALS['mysqli']->query("SHOW DATABASES;"))) {
 //        throw new Exception($GLOBALS['mysqli']->errno . ": " . $GLOBALS['mysqli']->error);
 //    }
@@ -165,6 +167,7 @@ function api_EVENTS_POST()
         /** @noinspection PhpMissingBreakStatementInspection */
         case 2:
             $object2 = $GLOBALS['path'][1];
+            $
         case 1:
             $session = $GLOBALS['path'][0];
             break;
@@ -354,9 +357,7 @@ EOF;
             $response['dial'] = "+1 407 934 7639";
             $response['apiKey'] = $apiKey;
 
-            Header("HTTP/1.1 201 Created");
-            Header("Content-type: application/json");
-            print json_encode($response);
+            sendResponse($response, 201);
         } catch (Exception $e) {
             print_r($e);
             exit();
@@ -371,4 +372,21 @@ function generateSessionId() {
 
 function generateApiKey($sessionId){
     return sha1($sessionId . microtime(true) . mt_rand(10000,90000));
+}
+
+function sendResponse($response, $code, $message='') {
+    if ($message == '') {
+        switch ($code) {
+            case 201:
+                $message = "Created";
+                break;
+            case 400:
+                $message = "Bad Request";
+                break;
+        }
+    }
+
+    Header("HTTP/1.1 {$message} Created");
+    Header("Content-type: application/json");
+    print json_encode($response);
 }
