@@ -101,8 +101,6 @@ exit();
 function api_EVENTS_GET()
 {
 
-    print_r(__FUNCTION__);
-
 //    if (!($result = $GLOBALS['mysqli']->query("SHOW DATABASES;"))) {
 //        throw new Exception($GLOBALS['mysqli']->errno . ": " . $GLOBALS['mysqli']->error);
 //    }
@@ -176,6 +174,17 @@ function api_EVENTS_POST()
             throw new BadRequestException();
             break;
     }
+
+    $funcCall = __FUNCTION__;
+    if (isset($session) && strlen($session) > 0) {
+        $funcCall = $funcCall . '_ID';
+        if (isset($object2) && strlen($object2) > 0) {
+            $funcCall = $funcCall . $object2;
+        }
+    }
+
+    print $funcCall;
+    exit();
 
     if (isset($object2) && strlen($object2) > 0) {
         // Reassure the debugger
