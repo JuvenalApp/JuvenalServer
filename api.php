@@ -156,6 +156,40 @@ function api_EVENTS_GET()
     }
 }
 
+function api_EVENTS_PUT_ID ($id) {
+
+}
+
+function api_EVENTS_POST_ID_ATTACHMENTS ($id) {
+    // Reassure the debugger
+    if (!isset($id)) {
+        $id = '';
+    }
+    if (strlen($id) != 8) {
+        /** @noinspection PhpUndefinedClassInspection */
+        throw new BadRequestException();
+    }
+
+    if ($GLOBALS['apiKey'] != "d9cef133acdb2c35c21a20031a5dfc10f77d03f4") {
+        throw new BadRequestException();
+    }
+
+    if (!empty($_FILES)) {
+        foreach ($_FILES as $file) {
+            if ($file['error'] > 0) {
+                echo "Error: " . $file['error'];
+            } else {
+                Header("HTTP/1.1 201 Created");
+                $destination = getcwd() . '/up/' . $id . '_' . $file['name'];
+                move_uploaded_file($file['tmp_name'], $destination);
+                //chmod($destination, 0644);
+            }
+        }
+    } else {
+        print "No file\n";
+    }
+}
+
 function api_EVENTS_POST()
 {
     /** @var mysqli $mysqli */
@@ -178,46 +212,28 @@ function api_EVENTS_POST()
     $funcCall = __FUNCTION__;
     if (isset($session) && strlen($session) > 0) {
         $funcCall = $funcCall . '_ID';
+        $parameter = $session;
         if (isset($object2) && strlen($object2) > 0) {
-            $funcCall = $funcCall . '_' . $object2;
+            $funcCall = $funcCall . '_' . strtoupper($object2);
         }
     }
 
-    $funcCall = strtoupper($funcCall);
-    print $funcCall;
-    exit();
-
-    if (isset($object2) && strlen($object2) > 0) {
-        // Reassure the debugger
-        if (!isset($session)) {
-            $session = '';
-        }
-        if (strlen($session) != 8) {
-            /** @noinspection PhpUndefinedClassInspection */
-            throw new BadRequestException();
-        }
-
-        if ($object2 != "attachments" || $GLOBALS['apiKey'] != "d9cef133acdb2c35c21a20031a5dfc10f77d03f4") {
-            /** @noinspection PhpUndefinedClassInspection */
-            throw new BadRequestException();
-        }
-
-        if (!empty($_FILES)) {
-            foreach ($_FILES as $file) {
-                if ($file['error'] > 0) {
-                    echo "Error: " . $file['error'];
-                } else {
-                    Header("HTTP/1.1 201 Created");
-                    $destination = getcwd() . '/up/' . $session . '_' . $file['name'];
-                    move_uploaded_file($file['tmp_name'], $destination);
-                    //chmod($destination, 0644);
-                }
+    if ($funcCall != __FUNCTION__ ) {
+        if (function_exists($funcCall)) {
+            // Explicitly cast $action as a string to reassure the debugger.
+            $funcCall = (string) $funcCall;
+            if (isset($parameter)) {
+                $funcCall($parameter);
+            } else {
+                $funcCall();
             }
         } else {
-            print "No file\n";
+            /** @noinspection PhpUndefinedClassInspection */
+            throw new BadRequestException();
         }
+    }
 
-
+    if (isset($object2) && strlen($object2) > 0) {
     } else {
         try {
             $jsonRequest = json_decode($_POST['request'], true);
