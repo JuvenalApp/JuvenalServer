@@ -179,10 +179,11 @@ function api_EVENTS_POST()
     if (isset($session) && strlen($session) > 0) {
         $funcCall = $funcCall . '_ID';
         if (isset($object2) && strlen($object2) > 0) {
-            $funcCall = $funcCall . $object2;
+            $funcCall = $funcCall . '_' . $object2;
         }
     }
 
+    $funcCall = strtoupper($funcCall);
     print $funcCall;
     exit();
 
