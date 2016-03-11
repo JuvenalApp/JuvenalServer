@@ -4,9 +4,8 @@ error_reporting(E_ALL);
 
 require 'exception.php';
 
-// Set connString to nothing to appease the IDE.
-// mysqli_conn sets the variable $connString for use with MySQLi
-$API_PATH = 'api';
+// Set these to -something- in case the include fails
+$API_PATH = '';
 $SQL_PREFIX = '';
 $CONNECTION_STRING = '';
 
@@ -93,7 +92,7 @@ if (isset($apiKey) && strlen($apiKey) == 40) {
         dev__apikeys
     WHERE
         apikey=(?)
-    ;
+    LIMIT 1
 EOF;
 
     /** @var mysqli_stmt $eventQuery */
@@ -103,8 +102,8 @@ EOF;
 
     $permissionQuery->bind_param("s",$apiKey);
     $permissionQuery->execute();
-    $permissionQuery->bind_result($)
-
+    $result = $permissionQuery->fetch_assoc();
+    print_r($result);
 }
 
 
@@ -330,7 +329,7 @@ function api_EVENTS_POST()
             email_address,
             latitude,
             longitude
-        ) VALUES (?, ?, ?, ?, ?);
+        ) VALUES (?, ?, ?, ?, ?)
 EOF;
 
             /** @var mysqli_stmt $eventQuery */
@@ -378,7 +377,6 @@ VALUES
     1,
     ?, ?
 )
-;
 EOF;
 
             /** @var mysqli_stmt $apiKeyQuery */
