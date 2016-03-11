@@ -159,21 +159,20 @@ EOF;
     LIMIT 1
 EOF;
 
-        print $sqlQuery;
-
         if (!$scopeQuery = $mysqli->prepare($sqlQuery)) {
-            throw new MySQLiStatementNotPreparedException($mysqli);
+            throw new MySQLiStatementNotPreparedException(print_r($mysqli,true));
         }
 
-        $scopeQuery->bind_param("i",$permissions['scopekey']);
+        $temp = (int)$permissions['scopekey'];
+        $scopeQuery->bind_param("i",$temp);
         if(!$scopeQuery->execute()) {
-            throw new MySQLiSelectQueryFailedException();
+            throw new MySQLiSelectQueryFailedException(print_r($mysqli,true) . print_r($scopeQuery,true));
         }
 
         $result = $scopeQuery->get_result();
 
         if ($result->num_rows < 1) {
-            throw new MySQLiNothingSelectedException();
+            throw new MySQLiNothingSelectedException(print_r($result,true));
         }
         $scopeResult = $result->fetch_array(MYSQLI_ASSOC);
 
