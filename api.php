@@ -97,7 +97,7 @@ if (isset($apiKey) && strlen($apiKey) == 40) {
 EOF;
 
     if (!$permissionQuery = $mysqli->prepare($sqlQuery)) {
-        throw new MySQLiStatementNotPreparedException($mysqli);
+        throw new MySQLiStatementNotPreparedException(print_r($mysqli,true));
     }
 
     $permissionQuery->bind_param("s",$apiKey);
