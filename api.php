@@ -133,17 +133,19 @@ EOF;
         case 'EVENT':
             $scope['product'] = "*";
             $scope['segment'] = "*";
-            $field1 = "{$SQL_PREFIX}events.segmentkey,";
-            $field2 = "{$SQL_PREFIX}segments.productkey";
+            $field1 = "session";
+            //$field2 = "{$SQL_PREFIX}segments.productkey";
             $table = 'events';
             $lookup = 'eventkey';
             $parameter = $permissions['scopekey'];
+            /*
             $join = <<<EOF
     LEFT JOIN
         {$SQL_PREFIX}segments
     ON
         {$SQL_PREFIX}events.segmentkey={$SQL_PREFIX}segments.segmentkey
 EOF;
+            */
             break;
         default:
             throw new Exception("Invalid Scope");
@@ -181,10 +183,20 @@ EOF;
         }
         $scopeResult = $result->fetch_array(MYSQLI_ASSOC);
 
+        print $sqlQuery . "\n\n";
+
+        print_r($scopeQuery);
+        print "\n\n";
+        print_r($result);
+        print "\n\n";
         print_r($scopeResult);
 
-        $scope['product'] = $scopeResult['productkey'];
-
+        if (isset($scopeResult['productkey'])) {
+            $scope['product'] = $scopeResult['productkey'];
+        }
+        if (isset($scopeResult['session'])) {
+            $scope['event'] = $scopeResult['session'];
+        }
     }
 
     print_r($permissions);
