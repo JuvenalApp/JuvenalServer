@@ -12,12 +12,6 @@ $CONNECTION_STRING = '';
 /** @noinspection PhpIncludeInspection */
 require '../config.inc.php';
 
-print <<<EOF
-$API_PATH = '';
-$SQL_PREFIX = '';
-$CONNECTION_STRING = '';
-EOF;
-
 $mysqlCredentials = array();
 
 foreach (explode(';', $CONNECTION_STRING) as $entry) {
@@ -34,6 +28,11 @@ if (strpos($_SERVER['REQUEST_URI'], "?") > 0) {
     $apiPath = $_SERVER['REQUEST_URI'];
     $filter = '';
 }
+
+print_r($mysqlCredentials);
+print_r($pattern);
+print_r($apiPath);
+print_r($filter);
 
 /* Depending on server configuration,
    the path may or more not start with /
