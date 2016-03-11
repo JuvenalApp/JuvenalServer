@@ -6,24 +6,24 @@ require 'exception.php';
 
 // Set connString to nothing to appease the IDE.
 // mysqli_conn sets the variable $connString for use with MySQLi
-$connString = '';
+$API_PATH = 'api';
+$SQL_PREFIX = '';
+$CONNECTION_STRING = '';
 
 /** @noinspection PhpIncludeInspection */
-require '../mysqli_conn.php';
-
-$API_PATH = 'api';
+require '../config.inc.php';
 
 $mysqlCredentials = array();
 
-foreach (explode(';', $connString) as $entry) {
+foreach (explode(';', $CONNECTION_STRING) as $entry) {
     list($key, $value) = explode('=', $entry);
     $mysqlCredentials[$key] = $value;
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
-$pattern = '/^\/' . $API_PATH . '\/([a-z0-9]{40}|)\/?(\w+$|\w+(?=[\/]))\/?(.+)?/';
+$pattern = '/^\/' . preg_quote($API_PATH) . '([a-z0-9]{40}|)\/?(\w+$|\w+(?=[\/]))\/?(.+)?/';
 
-if (strpos($_SERVER['REQUEST_URI'],"?") > 0) {
+if (strpos($_SERVER['REQUEST_URI'], "?") > 0) {
     list($apiPath, $filter) = explode('?', strtolower($_SERVER['REQUEST_URI']));
 } else {
     $apiPath = $_SERVER['REQUEST_URI'];
@@ -77,10 +77,41 @@ try {
     exit();
 }
 
+if (isset($apiKey) && strlen($apiKey) == 40) {
+    $sqlQuery = <<<EOF
+    SELECT
+        is_expired,
+        is_renewable,
+        scope,
+        scopekey,
+        ALLOW_LIST,
+        ALLOW_UPLOAD,
+        ALLOW_EDIT,
+        ALLOW_SEARCH,
+        ALLOW_APIKEY_CREATE
+    FROM
+        dev__apikeys
+    WHERE
+        apikey=(?)
+    ;
+EOF;
+
+    /** @var mysqli_stmt $eventQuery */
+    if (!$permissionQuery = $mysqli->prepare($sqlQuery)) {
+        throw new MySQLiStatementNotPreparedException($mysqli);
+    }
+
+    $permissionQuery->bind_param("s",$apiKey);
+    $permissionQuery->execute();
+    $permissionQuery->bind_result($)
+
+}
+
+
 try {
     if (function_exists($action)) {
         // Explicitly cast $action as a string to reassure the debugger.
-        $action = (string) $action;
+        $action = (string)$action;
         $action();
     } else {
         /** @noinspection PhpUndefinedClassInspection */
@@ -156,11 +187,13 @@ function api_EVENTS_GET()
     }
 }
 
-function api_EVENTS_PUT_ID ($id) {
+function api_EVENTS_PUT_ID($id)
+{
 
 }
 
-function api_EVENTS_POST_ID_ATTACHMENTS ($id) {
+function api_EVENTS_POST_ID_ATTACHMENTS($id)
+{
     if (!isset($id) || strlen($id) != 8) {
         $response['error'] = "No Session ID Provided";
         sendResponse($response, 400);
@@ -216,10 +249,10 @@ function api_EVENTS_POST()
         }
     }
 
-    if ($funcCall != __FUNCTION__ ) {
+    if ($funcCall != __FUNCTION__) {
         if (function_exists($funcCall)) {
             // Explicitly cast $action as a string to reassure the debugger.
-            $funcCall = (string) $funcCall;
+            $funcCall = (string)$funcCall;
             if (isset($parameter)) {
                 $funcCall($parameter);
             } else {
@@ -271,7 +304,7 @@ function api_EVENTS_POST()
                 switch ($key) {
                     case 'phone_number':
                         $filter = FILTER_VALIDATE_REGEXP;
-                        $options = array("options"=>array("regexp"=>"/^\+? ?[0-9 ]+$/"));
+                        $options = array("options" => array("regexp" => "/^\+? ?[0-9 ]+$/"));
                         break;
                     case 'email_address':
                         $filter = FILTER_VALIDATE_EMAIL;
@@ -290,7 +323,7 @@ function api_EVENTS_POST()
 
             $sqlQuery = <<<EOF
     INSERT INTO
-        api__dev__events
+        dev__events
         (
             session,
             phone_number,
@@ -308,27 +341,27 @@ EOF;
             do {
                 $sessionId = generateSessionId();
                 $eventQuery->bind_param("sssdd",
-                        $sessionId,
-                        $jsonRequest['phone_number'],
-                        $jsonRequest['email_address'],
-                        $jsonRequest['latitude'],
-                        $jsonRequest['longitude']
-                    );
+                    $sessionId,
+                    $jsonRequest['phone_number'],
+                    $jsonRequest['email_address'],
+                    $jsonRequest['latitude'],
+                    $jsonRequest['longitude']
+                );
                 $eventQuery->execute();
-            } while($eventQuery->errno == 1062);
+            } while ($eventQuery->errno == 1062);
 
-            switch($eventQuery->affected_rows) {
+            switch ($eventQuery->affected_rows) {
                 case -1:
-                    throw new MySQLiInsertQueryFailureException(print_r($eventQuery,true));
+                    throw new MySQLiInsertQueryFailureException(print_r($eventQuery, true));
                     break;
                 case 0:
-                    throw new MySQLiRowNotInsertedException(print_r($eventQuery,true));
+                    throw new MySQLiRowNotInsertedException(print_r($eventQuery, true));
                     break;
             }
 
             $sqlQuery = <<<EOF
 INSERT INTO
-    api__dev__apikeys
+    dev__apikeys
 (
     expiration,
     is_renewable,
@@ -355,21 +388,21 @@ EOF;
 
             do {
                 $apiKey = generateApiKey($sessionId);
-                $scopeKey = (int) $eventQuery->insert_id;
+                $scopeKey = (int)$eventQuery->insert_id;
 
                 $apiKeyQuery->bind_param("si",
-                        $apiKey,
-                        $scopeKey
-                    );
+                    $apiKey,
+                    $scopeKey
+                );
                 $apiKeyQuery->execute();
-            } while($apiKeyQuery->errno == 1062);
+            } while ($apiKeyQuery->errno == 1062);
 
-            switch($apiKeyQuery->affected_rows) {
+            switch ($apiKeyQuery->affected_rows) {
                 case -1:
-                    throw new MySQLiInsertQueryFailureException(print_r($apiKeyQuery,true));
+                    throw new MySQLiInsertQueryFailureException(print_r($apiKeyQuery, true));
                     break;
                 case 0:
-                    throw new MySQLiRowNotInsertedException(print_r($apiKeyQuery,true));
+                    throw new MySQLiRowNotInsertedException(print_r($apiKeyQuery, true));
                     break;
             }
             $eventQuery->close();
@@ -389,15 +422,18 @@ EOF;
 
 }
 
-function generateSessionId() {
+function generateSessionId()
+{
     return strtoupper(substr(str_shuffle(str_repeat("aeufhlmr145670", 8)), 0, 8));
 }
 
-function generateApiKey($sessionId){
-    return sha1($sessionId . microtime(true) . mt_rand(10000,90000));
+function generateApiKey($sessionId)
+{
+    return sha1($sessionId . microtime(true) . mt_rand(10000, 90000));
 }
 
-function sendResponse($response, $code, $message='', $exitAfter=true) {
+function sendResponse($response, $code, $message = '', $exitAfter = true)
+{
     if ($message == '') {
         switch ($code) {
             case 201:
