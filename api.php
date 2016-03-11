@@ -150,6 +150,7 @@ EOF;
         $sqlQuery = <<<EOF
     SELECT
         {$field1}
+        {$field2}
     FROM
         {$SQL_PREFIX}{$table}
     {$join}
