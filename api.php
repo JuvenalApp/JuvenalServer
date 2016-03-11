@@ -289,12 +289,13 @@ function api_EVENTS_POST_ID_ATTACHMENTS($id) {
 
         $sqlQuery = <<<EOF
     UPDATE
-        {$SQL_PREFIX}events
+        {$SQL_PREFIX}apikeys
     SET
         expiration = DATE_ADD(NOW(), INTERVAL 1 HOUR),
         last_renewal = NOW()
     WHERE
-        session=(?)
+        scope='EVENT'
+    AND scopekey=(SELECT eventkey FROM {$SQL_PREFIX}events WHERE session=?)
     AND is_expired=0
 EOF;
 
