@@ -527,9 +527,15 @@ function sendResponse($response, $code, $message = '', $exitAfter = true)
     }
 }
 
-function getPermission($action, $testScope = array()) {
+function getPermission($action, $compare = array()) {
     global $scope;
     global $permissions;
+
+    if( !fnmatch($scope['event'],$compare['event']) ||
+        !fnmatch($scope['segment'],$compare['segment']) ||
+        !fnmatch($scope['product'],$compare['product'])) {
+        return false;
+    }
 
     print_r($scope);
     print "\n\n";
@@ -540,7 +546,7 @@ function getPermission($action, $testScope = array()) {
             break;
     }
 
-    return false;
+    return true;
 }
 
 function getScopeByEventSession($event) {
