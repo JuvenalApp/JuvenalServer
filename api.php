@@ -127,6 +127,7 @@ EOF;
             $scope['event'] = "*";
             $field1 = 'productkey';
             $table = 'segments';
+            $lookup = 'segment';
             $parameter = $permissions['scopekey'];
             break;
         case 'EVENT':
@@ -135,6 +136,7 @@ EOF;
             $field1 = "{$SQL_PREFIX}events.segmentkey,";
             $field2 = "{$SQL_PREFIX}segments.productkey";
             $table = 'events';
+            $lookup = 'eventkey';
             $parameter = $permissions['scopekey'];
             $join = <<<EOF
     LEFT JOIN
@@ -157,7 +159,7 @@ EOF;
         {$SQL_PREFIX}{$table}
     {$join}
     WHERE
-        segmentkey=(?)
+        {$lookup}=(?)
     LIMIT 1
 EOF;
 
