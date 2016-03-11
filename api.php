@@ -12,6 +12,12 @@ $CONNECTION_STRING = '';
 /** @noinspection PhpIncludeInspection */
 require '../config.inc.php';
 
+print <<<EOF
+$API_PATH = '';
+$SQL_PREFIX = '';
+$CONNECTION_STRING = '';
+EOF;
+
 $mysqlCredentials = array();
 
 foreach (explode(';', $CONNECTION_STRING) as $entry) {
