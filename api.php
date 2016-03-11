@@ -29,10 +29,6 @@ if (strpos($_SERVER['REQUEST_URI'], "?") > 0) {
     $filter = '';
 }
 
-print_r($pattern);
-print_r($apiPath);
-print_r($filter);
-
 /* Depending on server configuration,
    the path may or more not start with /
 */
@@ -42,8 +38,6 @@ if (substr($apiPath, 0, 1) != '/') {
 }
 
 preg_match($pattern, $apiPath, $matches);
-
-print_r($matches);
 
 $path = '';
 $object = '';
