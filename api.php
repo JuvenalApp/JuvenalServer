@@ -179,11 +179,6 @@ EOF;
             $scope['event'] = $scopeResult['session'];
         }
     }
-
-    print_r($permissions);
-    print "\n\n";
-    print_r($scope);
-
 }
 
 try {
