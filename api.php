@@ -160,13 +160,13 @@ EOF;
 EOF;
 
         if (!$scopeQuery = $mysqli->prepare($sqlQuery)) {
-            throw new MySQLiStatementNotPreparedException(print_r($mysqli,true));
+            throw new MySQLiStatementNotPreparedException($sqlQuery . "\n\n" . print_r($mysqli,true));
         }
 
         $temp = (int)$permissions['scopekey'];
         $scopeQuery->bind_param("i",$temp);
         if(!$scopeQuery->execute()) {
-            throw new MySQLiSelectQueryFailedException(print_r($mysqli,true) . print_r($scopeQuery,true));
+            throw new MySQLiSelectQueryFailedException($sqlQuery . "\n\n" . print_r($mysqli,true) . print_r($scopeQuery,true));
         }
 
         $result = $scopeQuery->get_result();
