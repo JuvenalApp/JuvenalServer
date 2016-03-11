@@ -272,7 +272,7 @@ function api_EVENTS_POST_ID_ATTACHMENTS($id)
         sendResponse($response, 400);
     }
 
-    if (getPermission("UPLOAD",getScopeByEventSession($id))) {
+    if (!getPermission("UPLOAD",getScopeByEventSession($id))) {
         $response['error'] = "Underprivileged API Key";
         sendResponse($response, 401);
     }
@@ -540,16 +540,15 @@ function getPermission($action, $compare = array()) {
         }
     }
 
-    print_r($scope);
-    print "\n\n";
-    print_r($testScope);
-
-    switch ($action) {
-        case 'upload':
-            break;
+    $key = strtoUpper("allow_" . $action);
+    if (!isset($permissions[$key])) {
+        return false;
+    } else {
+        return ($permissions[$key] == 1);
     }
 
-    return true;
+    // We shouldn't be able to end up here.
+    return false;
 }
 
 function getScopeByEventSession($event) {
