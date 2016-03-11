@@ -83,7 +83,6 @@ if (isset($apiKey) && strlen($apiKey) == 40) {
         is_renewable,
         scope,
         scopekey,
-        segmentkey,
         ALLOW_LIST,
         ALLOW_UPLOAD,
         ALLOW_EDIT,
@@ -112,34 +111,54 @@ EOF;
     }
     $permissions = $result->fetch_array(MYSQLI_ASSOC);
 
-    $scope['segment'] = $permissions['segmentkey'];
-
-    switch($permissions['eventscope']) {
+    switch($permissions['scope']) {
         case 'GLOBAL':
             $scope['product'] = "*";
             $scope['segment'] = "*";
+            $scope['event'] = "*";
             break;
         case 'PRODUCT':
             $scope['product'] = $permissions['scopekey'];
             $scope['segment'] = "*";
+            $scope['event'] = "*";
             break;
         case 'SEGMENT':
+            $scope['segment'] = $permissions['scopekey'];
+            $scope['event'] = "*";
+            $field1 = 'productkey';
+            $table = 'segments';
+            break;
         case 'EVENT':
+            $scope['product'] = "*";
+            $scope['segment'] = "*";
+            $field1 = "{$SQL_PREFIX}segments.segmentkey,";
+            $field2 = 'productkey';
+            $join = <<<EOF
+    LEFT JOIN
+        {$SQL_PREFIX}products
+    ON
+        {$SQL_PREFIX}segments.segmentkey={$SQL_PREFIX}products.segmentkey
+EOF;
+            $table = 'events';
             break;
         default:
             throw new Exception("Invalid Scope");
+            break;
     }
 
-    if (!isset($scope['product'])) {
+    if (isset($table)) {
         $sqlQuery = <<<EOF
     SELECT
-        productkey
+        {$field1}
     FROM
-        {$SQL_PREFIX}segments
+        {$SQL_PREFIX}{$table}
+    {$join}
     WHERE
         segmentkey=(?)
     LIMIT 1
 EOF;
+
+        print $sqlQuery;
 
         if (!$scopeQuery = $mysqli->prepare($sqlQuery)) {
             throw new MySQLiStatementNotPreparedException($mysqli);
