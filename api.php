@@ -165,6 +165,7 @@ EOF;
             throw new MySQLiStatementNotPreparedException($sqlQuery . "\n\n" . print_r($mysqli,true));
         }
 
+        /** @var string $parameter */
         $temp = (int)$parameter;
         $scopeQuery->bind_param("i",$temp);
         if(!$scopeQuery->execute()) {
