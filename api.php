@@ -132,7 +132,7 @@ EOF;
             $scope['product'] = "*";
             $scope['segment'] = "*";
             $field1 = "segmentkey,";
-            $field2 = '{$SQL_PREFIX}segments.productkey';
+            $field2 = "{$SQL_PREFIX}segments.productkey";
             $join = <<<EOF
     LEFT JOIN
         {$SQL_PREFIX}products
