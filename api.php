@@ -104,7 +104,7 @@ EOF;
     if(!$permissionQuery->execute()) {
         throw new MySQLiSelectQueryFailedException();
     }
-    $result = $permissionQuery->fetch_assoc()->fetch_array(MYSQLI_ASSOC);
+    $result = $permissionQuery->get_result()->fetch_array(MYSQLI_ASSOC);
     print_r($result);
 }
 
