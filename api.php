@@ -106,13 +106,7 @@ EOF;
     }
     $result = $permissionQuery->get_result();
 
-    print $sqlQuery;
-    print "\n\n";
-    print_r($permissionQuery);
-    print "\n\n";
-    print_r($result);
-    print "\n\n";
-    $row->fetch_array(MYSQLI_ASSOC);
+    $row = $result->fetch_array(MYSQLI_ASSOC);
     print_r($row);
 }
 
