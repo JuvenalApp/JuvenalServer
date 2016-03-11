@@ -127,19 +127,21 @@ EOF;
             $scope['event'] = "*";
             $field1 = 'productkey';
             $table = 'segments';
+            $parameter = $permissions['scopekey'];
             break;
         case 'EVENT':
             $scope['product'] = "*";
             $scope['segment'] = "*";
-            $field1 = "segmentkey,";
+            $field1 = "{$SQL_PREFIX}events.segmentkey,";
             $field2 = "{$SQL_PREFIX}segments.productkey";
+            $table = 'events';
+            $parameter = $permissions['scopekey'];
             $join = <<<EOF
     LEFT JOIN
-        {$SQL_PREFIX}products
+        {$SQL_PREFIX}segments
     ON
-        {$SQL_PREFIX}segments.segmentkey={$SQL_PREFIX}products.segmentkey
+        {$SQL_PREFIX}events.segmentkey={$SQL_PREFIX}segments.segmentkey
 EOF;
-            $table = 'segments';
             break;
         default:
             throw new Exception("Invalid Scope");
@@ -163,7 +165,7 @@ EOF;
             throw new MySQLiStatementNotPreparedException($sqlQuery . "\n\n" . print_r($mysqli,true));
         }
 
-        $temp = (int)$permissions['scopekey'];
+        $temp = (int)$parameter;
         $scopeQuery->bind_param("i",$temp);
         if(!$scopeQuery->execute()) {
             throw new MySQLiSelectQueryFailedException($sqlQuery . "\n\n" . print_r($mysqli,true) . print_r($scopeQuery,true));
