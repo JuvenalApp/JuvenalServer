@@ -181,6 +181,8 @@ EOF;
         }
         $scopeResult = $result->fetch_array(MYSQLI_ASSOC);
 
+        print_r($scopeResult);
+
         $scope['product'] = $scopeResult['productkey'];
 
     }
