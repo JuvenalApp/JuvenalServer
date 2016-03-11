@@ -5,8 +5,8 @@ error_reporting(E_ALL);
 require 'exception.php';
 
 // Set these to -something- in case the include fails
-$API_PATH = '';
-$SQL_PREFIX = '';
+$API_PATH          = '';
+$SQL_PREFIX        = '';
 $CONNECTION_STRING = '';
 
 /** @noinspection PhpIncludeInspection */
@@ -16,17 +16,17 @@ $mysqlCredentials = array();
 
 foreach (explode(';', $CONNECTION_STRING) as $entry) {
     list($key, $value) = explode('=', $entry);
-    $mysqlCredentials[$key] = $value;
+    $mysqlCredentials[ $key ] = $value;
 }
 
-$method = $_SERVER['REQUEST_METHOD'];
+$method  = $_SERVER['REQUEST_METHOD'];
 $pattern = '/^\/' . preg_quote($API_PATH, '/') . '([a-z0-9]{40}|)\/?(\w+$|\w+(?=[\/]))\/?(.+)?/';
 
 if (strpos($_SERVER['REQUEST_URI'], "?") > 0) {
     list($apiPath, $filter) = explode('?', strtolower($_SERVER['REQUEST_URI']));
 } else {
     $apiPath = $_SERVER['REQUEST_URI'];
-    $filter = '';
+    $filter  = '';
 }
 
 /* Depending on server configuration,
@@ -39,7 +39,7 @@ if (substr($apiPath, 0, 1) != '/') {
 
 preg_match($pattern, $apiPath, $matches);
 
-$path = '';
+$path   = '';
 $object = '';
 $apiKey = '';
 
@@ -56,13 +56,17 @@ switch (count($matches)) {
 }
 
 $action = 'api_' . strtoupper($object . '_' . $method);
-
 $action = filter_var($action, FILTER_SANITIZE_EMAIL);
 
 $mysqli = new mysqli();
 
 try {
-    $mysqli->connect($mysqlCredentials['Data Source'], $mysqlCredentials['User Id'], $mysqlCredentials['Password'], $mysqlCredentials['Database']);
+    $mysqli->connect(
+        $mysqlCredentials['Data Source'],
+        $mysqlCredentials['User Id'],
+        $mysqlCredentials['Password'],
+        $mysqlCredentials['Database']
+    );
 
     if ($mysqli->errno) {
         throw new MySQLiNotConnectedError($mysqli->errno . ": " . $mysqli->error);
@@ -92,11 +96,11 @@ if (isset($apiKey) && strlen($apiKey) == 40) {
 EOF;
 
     if (!$permissionQuery = $mysqli->prepare($sqlQuery)) {
-        throw new MySQLiStatementNotPreparedException(print_r($mysqli,true));
+        throw new MySQLiStatementNotPreparedException(print_r($mysqli, true));
     }
 
-    $permissionQuery->bind_param("s",$apiKey);
-    if(!$permissionQuery->execute()) {
+    $permissionQuery->bind_param("s", $apiKey);
+    if (!$permissionQuery->execute()) {
         throw new MySQLiSelectQueryFailedException();
     }
 
@@ -114,28 +118,28 @@ EOF;
             case 'GLOBAL':
                 $scope['product'] = "*";
                 $scope['segment'] = "*";
-                $scope['event'] = "*";
+                $scope['event']   = "*";
                 break;
             case 'PRODUCT':
                 $scope['product'] = $permissions['scopekey'];
                 $scope['segment'] = "*";
-                $scope['event'] = "*";
+                $scope['event']   = "*";
                 break;
             case 'SEGMENT':
                 $scope['segment'] = $permissions['scopekey'];
-                $scope['event'] = "*";
-                $field = 'productkey';
-                $table = 'segments';
-                $lookup = 'segment';
-                $parameter = $permissions['scopekey'];
+                $scope['event']   = "*";
+                $field            = 'productkey';
+                $table            = 'segments';
+                $lookup           = 'segment';
+                $parameter        = $permissions['scopekey'];
                 break;
             case 'EVENT':
                 $scope['product'] = "*";
                 $scope['segment'] = "*";
-                $field = "session";
-                $table = 'events';
-                $lookup = 'eventkey';
-                $parameter = $permissions['scopekey'];
+                $field            = "session";
+                $table            = 'events';
+                $lookup           = 'eventkey';
+                $parameter        = $permissions['scopekey'];
                 break;
             default:
                 throw new Exception("Invalid Scope");
@@ -187,10 +191,8 @@ try {
         $action = (string)$action;
         $action();
     } else {
-        /** @noinspection PhpUndefinedClassInspection */
         throw new BadRequestException();
     }
-    /** @noinspection PhpUndefinedClassInspection */
 } catch (BadRequestException $bre) {
     $message = $bre->getMessage();
     if (strlen($message) == 0) {
@@ -202,19 +204,17 @@ try {
 
 exit();
 
-function api_EVENTS_GET()
-{
+function api_EVENTS_GET() {
     global $apiKey;
     global $path;
 
     if ($apiKey != "d9cef133acdb2c35c21a20031a5dfc10f77d03f4") {
-        /** @noinspection PhpUndefinedClassInspection */
         throw new BadRequestException();
     }
 
     $attachmentIndex = '';
-    $object2 = '';
-    $session = '';
+    $object2         = '';
+    $session         = '';
 
     switch (count($path)) {
         /** @noinspection PhpMissingBreakStatementInspection */
@@ -229,19 +229,16 @@ function api_EVENTS_GET()
         case 0:
             break;
         default:
-            /** @noinspection PhpUndefinedClassInspection */
             throw new BadRequestException();
             break;
     }
 
     if (strlen($session) != 8) {
-        /** @noinspection PhpUndefinedClassInspection */
         throw new BadRequestException();
     }
 
     if (isset($object2) && strlen($object2) > 0) {
         if ($object2 != "attachments") {
-            /** @noinspection PhpUndefinedClassInspection */
             throw new BadRequestException();
         } else {
             if (isset($attachmentIndex)) {
@@ -255,19 +252,17 @@ function api_EVENTS_GET()
     }
 }
 
-function api_EVENTS_PUT_ID($id)
-{
+function api_EVENTS_PUT_ID($id) {
 
 }
 
-function api_EVENTS_POST_ID_ATTACHMENTS($id)
-{
+function api_EVENTS_POST_ID_ATTACHMENTS($id) {
     if (!isset($id) || strlen($id) != 8) {
         $response['error'] = "No Session ID Provided";
         sendResponse($response, 400);
     }
 
-    if (!getPermission("UPLOAD",getScopeByEventSession($id))) {
+    if (!getPermission("UPLOAD", getScopeByEventSession($id))) {
         $response['error'] = "Underprivileged API Key";
         sendResponse($response, 401);
     }
@@ -289,8 +284,7 @@ function api_EVENTS_POST_ID_ATTACHMENTS($id)
     }
 }
 
-function api_EVENTS_POST()
-{
+function api_EVENTS_POST() {
     global $mysqli;
     global $path;
 
@@ -310,7 +304,7 @@ function api_EVENTS_POST()
 
     $funcCall = __FUNCTION__;
     if (isset($session) && strlen($session) > 0) {
-        $funcCall = $funcCall . '_ID';
+        $funcCall  = $funcCall . '_ID';
         $parameter = $session;
         if (isset($object2) && strlen($object2) > 0) {
             $funcCall = $funcCall . '_' . strtoupper($object2);
@@ -327,7 +321,6 @@ function api_EVENTS_POST()
                 $funcCall();
             }
         } else {
-            /** @noinspection PhpUndefinedClassInspection */
             throw new BadRequestException();
         }
     } else {
@@ -364,14 +357,14 @@ function api_EVENTS_POST()
             }
 
             foreach ($jsonRequest as $key => $value) {
-                $filter = null;
+                $filter  = null;
                 $options = [];
                 switch ($key) {
                     case 'segment':
                         $filter = FILTER_VALIDATE_INT;
                         break;
                     case 'phone_number':
-                        $filter = FILTER_VALIDATE_REGEXP;
+                        $filter  = FILTER_VALIDATE_REGEXP;
                         $options = array("options" => array("regexp" => "/^\+? ?[0-9 ]+$/"));
                         break;
                     case 'email_address':
@@ -456,7 +449,7 @@ EOF;
             }
 
             do {
-                $apiKey = generateApiKey($sessionId);
+                $apiKey   = generateApiKey($sessionId);
                 $scopeKey = (int)$eventQuery->insert_id;
 
                 $apiKeyQuery->bind_param("si",
@@ -477,10 +470,10 @@ EOF;
             $eventQuery->close();
             $apiKeyQuery->close();
 
-            $response = array();
+            $response            = array();
             $response['session'] = $sessionId;
-            $response['dial'] = "+1 407 934 7639";
-            $response['apiKey'] = $apiKey;
+            $response['dial']    = "+1 407 934 7639";
+            $response['apiKey']  = $apiKey;
 
             sendResponse($response, 201);
         } catch (Exception $e) {
@@ -491,18 +484,15 @@ EOF;
 
 }
 
-function generateSessionId()
-{
+function generateSessionId() {
     return strtoupper(substr(str_shuffle(str_repeat("aeufhlmr145670", 8)), 0, 8));
 }
 
-function generateApiKey($sessionId)
-{
+function generateApiKey($sessionId) {
     return sha1($sessionId . microtime(true) . mt_rand(10000, 90000));
 }
 
-function sendResponse($response, $code, $message = '', $exitAfter = true)
-{
+function sendResponse($response, $code, $message = '', $exitAfter = true) {
     if ($message == '') {
         switch ($code) {
             case 201:
@@ -530,17 +520,17 @@ function getPermission($action, $compare = array()) {
         return false;
     }
 
-    foreach (array("event","product","segment") as $attribute) {
-        if (!fnmatch($scope[$attribute],$compare[$attribute])) {
+    foreach (array("event", "product", "segment") as $attribute) {
+        if (!fnmatch($scope[ $attribute ], $compare[ $attribute ])) {
             return false;
         }
     }
 
     $key = strtoupper("allow_" . $action);
-    if (!isset($permissions[$key])) {
+    if (!isset($permissions[ $key ])) {
         return false;
     } else {
-        return ($permissions[$key] == 1);
+        return ($permissions[ $key ] == 1);
     }
 }
 
@@ -565,11 +555,11 @@ function getScopeByEventSession($event) {
 EOF;
 
     if (!$scopeQuery = $mysqli->prepare($sqlQuery)) {
-        throw new MySQLiStatementNotPreparedException(print_r($mysqli,true));
+        throw new MySQLiStatementNotPreparedException(print_r($mysqli, true));
     }
 
-    $scopeQuery->bind_param("s",$event);
-    if(!$scopeQuery->execute()) {
+    $scopeQuery->bind_param("s", $event);
+    if (!$scopeQuery->execute()) {
         throw new MySQLiSelectQueryFailedException();
     }
 
@@ -578,5 +568,6 @@ EOF;
     if ($result->num_rows < 1) {
         throw new MySQLiNothingSelectedException();
     }
+
     return $result->fetch_array(MYSQLI_ASSOC);
 }
