@@ -531,10 +531,13 @@ function getPermission($action, $compare = array()) {
     global $scope;
     global $permissions;
 
-    if( !fnmatch($scope['event'],$compare['event']) ||
-        !fnmatch($scope['segment'],$compare['segment']) ||
-        !fnmatch($scope['product'],$compare['product'])) {
-        return false;
+    foreach (array("event","segment","product") as $attribute) {
+        print "fnmatch($scope[$attribute],$compare[$attribute])\n";
+        print var_dump(fnmatch($scope[$attribute],$compare[$attribute])) . "\n";
+
+        if (!fnmatch($scope[$attribute],$compare[$attribute])) {
+            return false;
+        }
     }
 
     print_r($scope);
