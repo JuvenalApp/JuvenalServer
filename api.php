@@ -282,6 +282,32 @@ function api_EVENTS_POST_ID_ATTACHMENTS($id) {
             //chmod($destination, 0644);
         }
     }
+
+    if (getPermission("RENEW", getScopeByEventSession($id))) {
+        global $mysqli;
+        global $SQL_PREFIX;
+
+        $sqlQuery = <<<EOF
+    UPDATE
+        {$SQL_PREFIX}events
+    SET
+        expiration = DATE_ADD(NOW(), INTERVAL 1 HOUR),
+        last_renewal = NOW()
+    WHERE
+        session=(?)
+    AND is_expired=0
+EOF;
+
+        if (!$update = $mysqli->prepare($sqlQuery)) {
+            throw new MySQLiStatementNotPreparedException(print_r($mysqli, true) . "\n" . print_r($update, true));
+        }
+
+        $update->bind_param("s", $id);
+        if (!$update->execute()) {
+            throw new MySQLiUpdateQueryFailedException(print_r($mysqli, true) . "\n" . print_r($update, true));
+        }
+    }
+
 }
 
 function api_EVENTS_POST() {
