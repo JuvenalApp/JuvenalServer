@@ -14,4 +14,6 @@ class MySQLiRowNotInsertedException extends Exception { }
 
 class UnsanitizedInputException extends Exception {}
 
+class ApiKeyNotPrivilegedException extends Exception {}
+
 ?>
