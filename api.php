@@ -277,8 +277,8 @@ function api_EVENTS_POST_ID_ATTACHMENTS($id)
         sendResponse($response, 400);
     }
 
-    if ($GLOBALS['apiKey'] != "d9cef133acdb2c35c21a20031a5dfc10f77d03f4") {
-        $response['error'] = "Underpriviledged API Key";
+    if (getPermission("UPLOAD",getScopeByEventSession($id))) {
+        $response['error'] = "Underprivileged API Key";
         sendResponse($response, 401);
     }
 
@@ -340,9 +340,6 @@ function api_EVENTS_POST()
             /** @noinspection PhpUndefinedClassInspection */
             throw new BadRequestException();
         }
-    }
-
-    if (isset($object2) && strlen($object2) > 0) {
     } else {
         try {
             $jsonRequest = json_decode($_POST['request'], true);
@@ -535,9 +532,55 @@ function sendResponse($response, $code, $message = '', $exitAfter = true)
     }
 }
 
-function getPermission($action, $apiKey, $scope = array()) {
+function getPermission($action, $testScope = array()) {
+    global $scope;
+    global $permissions;
+
+    print_r($scope);
+    print "\n\n";
+    print_r($testScope);
+
     switch ($action) {
         case 'upload':
             break;
     }
+
+    return false;
+}
+
+function getScopeByEventSession($event) {
+    global $mysqli;
+    global $SQL_PREFIX;
+
+    $sqlQuery = <<<EOF
+    SELECT
+        session AS event,
+        {$SQL_PREFIX}events.segmentkey AS segment,
+        {$SQL_PREFIX}segments.productkey AS product
+    FROM
+        {$SQL_PREFIX}events
+    LEFT JOIN
+        {$SQL_PREFIX}segments
+    ON
+        {$SQL_PREFIX}events.segmentkey={$SQL_PREFIX}segments.segmentkey
+    WHERE
+        session=(?)
+    LIMIT 1
+EOF;
+
+    if (!$scopeQuery = $mysqli->prepare($sqlQuery)) {
+        throw new MySQLiStatementNotPreparedException(print_r($mysqli,true));
+    }
+
+    $scopeQuery->bind_param("s",$event);
+    if(!$scopeQuery->execute()) {
+        throw new MySQLiSelectQueryFailedException();
+    }
+
+    $result = $scopeQuery->get_result();
+
+    if ($result->num_rows < 1) {
+        throw new MySQLiNothingSelectedException();
+    }
+    return $result->fetch_array(MYSQLI_ASSOC);
 }
