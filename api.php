@@ -80,9 +80,9 @@ if (isset($apiKey) && strlen($apiKey) == 40) {
     $sqlQuery = <<<EOF
     SELECT
         is_expired,
-        is_renewable,
         scope,
         scopekey,
+        ALLOW_RENEW,
         ALLOW_LIST,
         ALLOW_UPLOAD,
         ALLOW_EDIT,
@@ -111,72 +111,77 @@ EOF;
     }
     $permissions = $result->fetch_array(MYSQLI_ASSOC);
 
-    switch($permissions['scope']) {
-        case 'GLOBAL':
-            $scope['product'] = "*";
-            $scope['segment'] = "*";
-            $scope['event'] = "*";
-            break;
-        case 'PRODUCT':
-            $scope['product'] = $permissions['scopekey'];
-            $scope['segment'] = "*";
-            $scope['event'] = "*";
-            break;
-        case 'SEGMENT':
-            $scope['segment'] = $permissions['scopekey'];
-            $scope['event'] = "*";
-            $field = 'productkey';
-            $table = 'segments';
-            $lookup = 'segment';
-            $parameter = $permissions['scopekey'];
-            break;
-        case 'EVENT':
-            $scope['product'] = "*";
-            $scope['segment'] = "*";
-            $field = "session";
-            $table = 'events';
-            $lookup = 'eventkey';
-            $parameter = $permissions['scopekey'];
-            break;
-        default:
-            throw new Exception("Invalid Scope");
-            break;
-    }
 
-    if (isset($table)) {
-        $sqlQuery = <<<EOF
-    SELECT
-        {$field}
-    FROM
-        {$SQL_PREFIX}{$table}
-    WHERE
-        {$lookup}=(?)
-    LIMIT 1
+    if ($permissions['is_expired']) {
+        $scope = array();
+    } else {
+        switch ($permissions['scope']) {
+            case 'GLOBAL':
+                $scope['product'] = "*";
+                $scope['segment'] = "*";
+                $scope['event'] = "*";
+                break;
+            case 'PRODUCT':
+                $scope['product'] = $permissions['scopekey'];
+                $scope['segment'] = "*";
+                $scope['event'] = "*";
+                break;
+            case 'SEGMENT':
+                $scope['segment'] = $permissions['scopekey'];
+                $scope['event'] = "*";
+                $field = 'productkey';
+                $table = 'segments';
+                $lookup = 'segment';
+                $parameter = $permissions['scopekey'];
+                break;
+            case 'EVENT':
+                $scope['product'] = "*";
+                $scope['segment'] = "*";
+                $field = "session";
+                $table = 'events';
+                $lookup = 'eventkey';
+                $parameter = $permissions['scopekey'];
+                break;
+            default:
+                throw new Exception("Invalid Scope");
+                break;
+        }
+
+        if (isset($table)) {
+            $sqlQuery = <<<EOF
+        SELECT
+            {$field}
+        FROM
+            {$SQL_PREFIX}{$table}
+        WHERE
+            {$lookup}=(?)
+        LIMIT 1
 EOF;
 
-        if (!$scopeQuery = $mysqli->prepare($sqlQuery)) {
-            throw new MySQLiStatementNotPreparedException($sqlQuery . "\n\n" . print_r($mysqli,true));
-        }
+            if (!$scopeQuery = $mysqli->prepare($sqlQuery)) {
+                throw new MySQLiStatementNotPreparedException($sqlQuery . "\n\n" . print_r($mysqli, true));
+            }
 
-        /** @var string $parameter */
-        $temp = (int)$parameter;
-        $scopeQuery->bind_param("i",$temp);
-        if(!$scopeQuery->execute()) {
-            throw new MySQLiSelectQueryFailedException($sqlQuery . "\n\n" . print_r($mysqli,true) . print_r($scopeQuery,true));
-        }
+            /** @var string $parameter */
+            $temp = (int)$parameter;
+            $scopeQuery->bind_param("i", $temp);
+            if (!$scopeQuery->execute()) {
+                throw new MySQLiSelectQueryFailedException($sqlQuery . "\n\n" . print_r($mysqli, true) . print_r($scopeQuery, true));
+            }
 
-        $result = $scopeQuery->get_result();
+            $result = $scopeQuery->get_result();
 
-        if ($result->num_rows < 1) {
-            throw new MySQLiNothingSelectedException(print_r($result,true));
-        }
-        $scopeResult = $result->fetch_array(MYSQLI_ASSOC);
+            if ($result->num_rows < 1) {
+                throw new MySQLiNothingSelectedException(print_r($result, true));
+            }
+            $scopeResult = $result->fetch_array(MYSQLI_ASSOC);
 
-        if (isset($scopeResult['productkey'])) {
-            $scope['product'] = $scopeResult['productkey'];
-        }
-        if (isset($scopeResult['session'])) {
-            $scope['event'] = $scopeResult['session'];
+            if (isset($scopeResult['productkey'])) {
+                $scope['product'] = $scopeResult['productkey'];
+            }
+            if (isset($scopeResult['session'])) {
+                $scope['event'] = $scopeResult['session'];
+            }
         }
     }
 }
@@ -439,8 +444,8 @@ INSERT INTO
     dev__apikeys
 (
     expiration,
-    is_renewable,
     scope,
+    ALLOW_RENEW,
     ALLOW_UPLOAD,
     apikey,
     scopekey
@@ -448,8 +453,8 @@ INSERT INTO
 VALUES
 (
     DATE_ADD(NOW(), INTERVAL 1 HOUR),
-    1,
     'EVENT',
+    1,
     1,
     ?, ?
 )
@@ -531,24 +536,22 @@ function getPermission($action, $compare = array()) {
     global $scope;
     global $permissions;
 
-    foreach (array("product","segment","event") as $attribute) {
-        print "fnmatch($scope[$attribute],$compare[$attribute])\n";
-        print var_dump(fnmatch($scope[$attribute],$compare[$attribute])) . "\n";
+    if (count($scope) == 0) {
+        return false;
+    }
 
+    foreach (array("event","product","segment") as $attribute) {
         if (!fnmatch($scope[$attribute],$compare[$attribute])) {
             return false;
         }
     }
 
-    $key = strtoUpper("allow_" . $action);
+    $key = strtoupper("allow_" . $action);
     if (!isset($permissions[$key])) {
         return false;
     } else {
         return ($permissions[$key] == 1);
     }
-
-    // We shouldn't be able to end up here.
-    return false;
 }
 
 function getScopeByEventSession($event) {
