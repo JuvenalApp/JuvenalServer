@@ -441,7 +441,7 @@ EOF;
 
             switch ($eventQuery->affected_rows) {
                 case -1:
-                    throw new MySQLiInsertQueryFailureException(print_r($eventQuery, true));
+                    throw new MySQLiInsertQueryFailedException(print_r($eventQuery, true));
                     break;
                 case 0:
                     throw new MySQLiRowNotInsertedException(print_r($eventQuery, true));
@@ -487,7 +487,7 @@ EOF;
 
             switch ($apiKeyQuery->affected_rows) {
                 case -1:
-                    throw new MySQLiInsertQueryFailureException(print_r($apiKeyQuery, true));
+                    throw new MySQLiInsertQueryFailedException(print_r($apiKeyQuery, true));
                     break;
                 case 0:
                     throw new MySQLiRowNotInsertedException(print_r($apiKeyQuery, true));

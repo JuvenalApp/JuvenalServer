@@ -13,9 +13,9 @@ class MySQLiNotConnectedError extends Exception { }
 class MySQLiStatementNotPreparedException extends Exception { }
 
 class MySQLiSelectQueryFailedException extends Exception { }
-class MySQLiInsertQueryFailureException extends Exception { }
-class MySQLiUpdateQueryFailureException extends Exception { }
-class MySQLiDeleteQueryFailureException extends Exception { }
+class MySQLiInsertQueryFailedException extends Exception { }
+class MySQLiUpdateQueryFailedException extends Exception { }
+class MySQLiDeleteQueryFailedException extends Exception { }
 
 class MySQLiRowNotInsertedException extends Exception { }
 class MySQLiNothingSelectedException extends Exception { }
