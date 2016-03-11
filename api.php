@@ -101,8 +101,10 @@ EOF;
     }
 
     $permissionQuery->bind_param("s",$apiKey);
-    $permissionQuery->execute();
-    $result = $permissionQuery->fetch_assoc();
+    if(!$permissionQuery->execute()) {
+        throw new MySQLiSelectQueryFailedException();
+    }
+    $result = $permissionQuery->fetch_assoc()->fetch_array(MYSQLI_ASSOC);
     print_r($result);
 }
 
