@@ -531,7 +531,7 @@ function getPermission($action, $compare = array()) {
     global $scope;
     global $permissions;
 
-    foreach (array("event","segment","product") as $attribute) {
+    foreach (array("product","segment","event") as $attribute) {
         print "fnmatch($scope[$attribute],$compare[$attribute])\n";
         print var_dump(fnmatch($scope[$attribute],$compare[$attribute])) . "\n";
 
