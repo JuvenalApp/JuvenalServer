@@ -131,8 +131,8 @@ EOF;
         case 'EVENT':
             $scope['product'] = "*";
             $scope['segment'] = "*";
-            $field1 = "{$SQL_PREFIX}segments.segmentkey,";
-            $field2 = 'productkey';
+            $field1 = "segmentkey,";
+            $field2 = '{$SQL_PREFIX}segments.productkey';
             $join = <<<EOF
     LEFT JOIN
         {$SQL_PREFIX}products
