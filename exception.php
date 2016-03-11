@@ -14,6 +14,8 @@ class MySQLiRowNotInsertedException extends Exception { }
 
 class MySQLiSelectQueryFailedException extends Exception { }
 
+class MySQLiNothingSelectedException extends Exception { }
+
 class UnsanitizedInputException extends Exception {}
 
 class ApiKeyNotPrivilegedException extends Exception {}

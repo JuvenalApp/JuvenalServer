@@ -83,19 +83,19 @@ if (isset($apiKey) && strlen($apiKey) == 40) {
         is_renewable,
         scope,
         scopekey,
+        segmentkey,
         ALLOW_LIST,
         ALLOW_UPLOAD,
         ALLOW_EDIT,
         ALLOW_SEARCH,
         ALLOW_APIKEY_CREATE
     FROM
-        dev__apikeys
+        {$SQL_PREFIX}apikeys
     WHERE
         apikey=(?)
     LIMIT 1
 EOF;
 
-    /** @var mysqli_stmt $eventQuery */
     if (!$permissionQuery = $mysqli->prepare($sqlQuery)) {
         throw new MySQLiStatementNotPreparedException($mysqli);
     }
@@ -104,12 +104,68 @@ EOF;
     if(!$permissionQuery->execute()) {
         throw new MySQLiSelectQueryFailedException();
     }
+
     $result = $permissionQuery->get_result();
 
-    $row = $result->fetch_array(MYSQLI_ASSOC);
-    print_r($row);
-}
+    if ($result->num_rows < 1) {
+        throw new MySQLiNothingSelectedException();
+    }
+    $permissions = $result->fetch_array(MYSQLI_ASSOC);
 
+    $scope['segment'] = $permissions['segmentkey'];
+
+    switch($permissions['eventscope']) {
+        case 'GLOBAL':
+            $scope['product'] = "*";
+            $scope['segment'] = "*";
+            break;
+        case 'PRODUCT':
+            $scope['product'] = $permissions['scopekey'];
+            $scope['segment'] = "*";
+            break;
+        case 'SEGMENT':
+        case 'EVENT':
+            break;
+        default:
+            throw new Exception("Invalid Scope");
+    }
+
+    if (!isset($scope['product'])) {
+        $sqlQuery = <<<EOF
+    SELECT
+        productkey
+    FROM
+        {$SQL_PREFIX}segments
+    WHERE
+        segmentkey=(?)
+    LIMIT 1
+EOF;
+
+        if (!$scopeQuery = $mysqli->prepare($sqlQuery)) {
+            throw new MySQLiStatementNotPreparedException($mysqli);
+        }
+
+        $scopeQuery->bind_param("i",$permissions['scopekey']);
+        if(!$scopeQuery->execute()) {
+            throw new MySQLiSelectQueryFailedException();
+        }
+
+        $result = $scopeQuery->get_result();
+
+        if ($result->num_rows < 1) {
+            throw new MySQLiNothingSelectedException();
+        }
+        $scopeResult = $result->fetch_array(MYSQLI_ASSOC);
+
+        $scope['product'] = $scopeResult['productkey'];
+
+    }
+
+    print_r($permissions);
+    print "\n\n";
+    print_r($scope);
+
+}
 
 try {
     if (function_exists($action)) {
@@ -305,6 +361,9 @@ function api_EVENTS_POST()
                 $filter = null;
                 $options = [];
                 switch ($key) {
+                    case 'segment':
+                        $filter = FILTER_VALIDATE_INT;
+                        break;
                     case 'phone_number':
                         $filter = FILTER_VALIDATE_REGEXP;
                         $options = array("options" => array("regexp" => "/^\+? ?[0-9 ]+$/"));
@@ -329,11 +388,12 @@ function api_EVENTS_POST()
         dev__events
         (
             session,
+            segment,
             phone_number,
             email_address,
             latitude,
             longitude
-        ) VALUES (?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?)
 EOF;
 
             /** @var mysqli_stmt $eventQuery */
@@ -343,8 +403,9 @@ EOF;
 
             do {
                 $sessionId = generateSessionId();
-                $eventQuery->bind_param("sssdd",
+                $eventQuery->bind_param("sissdd",
                     $sessionId,
+                    $jsonRequest['segment'],
                     $jsonRequest['phone_number'],
                     $jsonRequest['email_address'],
                     $jsonRequest['latitude'],
@@ -452,5 +513,12 @@ function sendResponse($response, $code, $message = '', $exitAfter = true)
     print json_encode($response);
     if (!$exitAfter) {
         exit();
+    }
+}
+
+function getPermission($action, $apiKey, $scope = array()) {
+    switch ($action) {
+        case 'upload':
+            break;
     }
 }
