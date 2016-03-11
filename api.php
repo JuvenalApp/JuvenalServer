@@ -20,7 +20,7 @@ foreach (explode(';', $CONNECTION_STRING) as $entry) {
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
-$pattern = '/^\/' . preg_quote($API_PATH) . '([a-z0-9]{40}|)\/?(\w+$|\w+(?=[\/]))\/?(.+)?/';
+$pattern = '/^\/' . preg_quote($API_PATH, '/') . '([a-z0-9]{40}|)\/?(\w+$|\w+(?=[\/]))\/?(.+)?/';
 
 if (strpos($_SERVER['REQUEST_URI'], "?") > 0) {
     list($apiPath, $filter) = explode('?', strtolower($_SERVER['REQUEST_URI']));
@@ -29,7 +29,6 @@ if (strpos($_SERVER['REQUEST_URI'], "?") > 0) {
     $filter = '';
 }
 
-print_r($mysqlCredentials);
 print_r($pattern);
 print_r($apiPath);
 print_r($filter);
@@ -43,6 +42,8 @@ if (substr($apiPath, 0, 1) != '/') {
 }
 
 preg_match($pattern, $apiPath, $matches);
+
+print_r($matches);
 
 $path = '';
 $object = '';
