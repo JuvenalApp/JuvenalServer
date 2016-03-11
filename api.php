@@ -55,10 +55,6 @@ switch (count($matches)) {
         break;
 }
 
-unset($pattern);
-unset($matches);
-unset($apiPath);
-
 $action = 'api_' . strtoupper($object . '_' . $method);
 
 $action = filter_var($action, FILTER_SANITIZE_EMAIL);
@@ -110,7 +106,6 @@ EOF;
         throw new MySQLiNothingSelectedException();
     }
     $permissions = $result->fetch_array(MYSQLI_ASSOC);
-
 
     if ($permissions['is_expired']) {
         $scope = array();
@@ -209,15 +204,10 @@ exit();
 
 function api_EVENTS_GET()
 {
+    global $apiKey;
+    global $path;
 
-//    if (!($result = $GLOBALS['mysqli']->query("SHOW DATABASES;"))) {
-//        throw new Exception($GLOBALS['mysqli']->errno . ": " . $GLOBALS['mysqli']->error);
-//    }
-//    while($row = $result->fetch_assoc()) {
-//        print_r($row);
-//    }
-
-    if ($GLOBALS['apiKey'] != "d9cef133acdb2c35c21a20031a5dfc10f77d03f4") {
+    if ($apiKey != "d9cef133acdb2c35c21a20031a5dfc10f77d03f4") {
         /** @noinspection PhpUndefinedClassInspection */
         throw new BadRequestException();
     }
@@ -226,15 +216,15 @@ function api_EVENTS_GET()
     $object2 = '';
     $session = '';
 
-    switch (count($GLOBALS['path'])) {
+    switch (count($path)) {
         /** @noinspection PhpMissingBreakStatementInspection */
         case 3:
-            $attachmentIndex = $GLOBALS['path'][2];
+            $attachmentIndex = $path[2];
         /** @noinspection PhpMissingBreakStatementInspection */
         case 2:
-            $object2 = $GLOBALS['path'][1];
+            $object2 = $path[1];
         case 1:
-            $session = $GLOBALS['path'][0];
+            $session = $path[0];
             break;
         case 0:
             break;
@@ -301,15 +291,15 @@ function api_EVENTS_POST_ID_ATTACHMENTS($id)
 
 function api_EVENTS_POST()
 {
-    /** @var mysqli $mysqli */
-    $mysqli = $GLOBALS['mysqli'];
+    global $mysqli;
+    global $path;
 
-    switch (count($GLOBALS['path'])) {
+    switch (count($path)) {
         /** @noinspection PhpMissingBreakStatementInspection */
         case 2:
-            $object2 = $GLOBALS['path'][1];
+            $object2 = $path[1];
         case 1:
-            $session = $GLOBALS['path'][0];
+            $session = $path[0];
             break;
         case 0:
             break;
