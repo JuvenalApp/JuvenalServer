@@ -139,7 +139,7 @@ EOF;
     ON
         {$SQL_PREFIX}segments.segmentkey={$SQL_PREFIX}products.segmentkey
 EOF;
-            $table = 'events';
+            $table = 'segments';
             break;
         default:
             throw new Exception("Invalid Scope");
