@@ -613,7 +613,7 @@ function generateApiKey($sessionId) {
 
 function sendResponse($response, $exitAfter = true) {
     if ($response instanceof Exception) {
-        $base = $response->e;
+        $base = $response->getResponse();
     } else {
         $base = $response;
     }
