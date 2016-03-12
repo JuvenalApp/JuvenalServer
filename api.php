@@ -438,14 +438,14 @@ function api_EVENTS_POST() {
                 ]
             ];
 
-            foreach ($requiredFields as $key) {
+            foreach ($requiredFields as $key => $parameters) {
                 if (!isset($jsonRequest[$key])) {
                     throw new BadRequestException("Required parameter `{$key}` is missing.");
                 }
 
                 $value = $jsonRequest[$key];
-                $filter = $requiredFields['filter'];
-                $options = isset($requiredFields[$key]['options']) ? $requiredFields[$key]['options'] : [];
+                $filter = $parameters['filter'];
+                $options = isset($parameters['options']) ? $parameters['options'] : [];
 
                 if (!filter_var($value, $filter, $options)) {
                     throw new BadRequestException("Parameter `{$key}`:`{$value}` is not valid.");
