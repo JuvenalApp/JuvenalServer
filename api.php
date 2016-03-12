@@ -612,7 +612,7 @@ function generateApiKey($sessionId) {
 }
 
 function sendResponse($response, $exitAfter = true) {
-    if ($response instanceof Exception) {
+    if ($response instanceof LeagleEyeException) {
         $base = $response->getResponse();
     } else {
         $base = $response;
