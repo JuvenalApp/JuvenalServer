@@ -618,8 +618,6 @@ function sendResponse($response, $exitAfter = true) {
         $base = $response;
     }
 
-    print_r($base);
-
     if (!isset($base['statusMessage']) OR $base['statusMessage'] == '') {
         switch ($base['status']) {
             case 200:
