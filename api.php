@@ -618,7 +618,11 @@ function sendResponse($response, $exitAfter = true) {
         $base = $response;
     }
 
-    print_r($response);
+    if (!isset($base['status'])) {
+        $base['status'] = "500";
+        $base['statusMessage'] = "No Status Provided";
+    }
+    $base['statusMessage'] = isset($base['statusMessage']) ? $base['statusMessage'] : "";
 
     if (!isset($base['statusMessage']) OR $base['statusMessage'] == '') {
         switch ($base['status']) {
