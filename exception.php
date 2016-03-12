@@ -1,23 +1,37 @@
 <?php
 
-class BadRequestException extends Exception { }
+class LeagleEyeException extends Exception
+{
+    public function __construct($message = ['error' => 'Unspecified Error'], $code = 0, Exception $previous = null) {
 
-class InvalidJsonException extends Exception { }
+        parent::__construct($message['error'], $code, $previous);
+    }
 
-class UnsanitizedInputException extends Exception {}
+    public function __toString() {
+        return __CLASS__ . ": [{$this->code}]: " . print_r($message,true) . "\n";
+    }
+}
 
-class ApiKeyNotPrivilegedException extends Exception {}
+
+class BadRequestException extends LeagleEyeException { }
+class WhatTheHeckIsThisException extends LeagleEyeException { }
+
+class InvalidJsonException extends LeagleEyeException { }
+
+class UnsanitizedInputException extends LeagleEyeException {}
+
+class ApiKeyNotPrivilegedException extends LeagleEyeException {}
 
 
-class MySQLiNotConnectedError extends Exception { }
-class MySQLiStatementNotPreparedException extends Exception { }
+class MySQLiNotConnectedException extends LeagleEyeException { }
+class MySQLiStatementNotPreparedException extends LeagleEyeException { }
 
-class MySQLiSelectQueryFailedException extends Exception { }
-class MySQLiInsertQueryFailedException extends Exception { }
-class MySQLiUpdateQueryFailedException extends Exception { }
-class MySQLiDeleteQueryFailedException extends Exception { }
+class MySQLiSelectQueryFailedException extends LeagleEyeException { }
+class MySQLiInsertQueryFailedException extends LeagleEyeException { }
+class MySQLiUpdateQueryFailedException extends LeagleEyeException { }
+class MySQLiDeleteQueryFailedException extends LeagleEyeException { }
 
-class MySQLiRowNotInsertedException extends Exception { }
-class MySQLiNothingSelectedException extends Exception { }
+class MySQLiRowNotInsertedException extends LeagleEyeException { }
+class MySQLiNothingSelectedException extends LeagleEyeException { }
 
 ?>
