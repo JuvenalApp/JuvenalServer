@@ -636,7 +636,7 @@ function sendResponse($response, $exitAfter = true) {
 
     Header("HTTP/1.1 {$base['status']} {$base['statusMessage']}");
     Header("Content-type: application/json");
-    print json_encode($response);
+    print json_encode($base);
     if ($exitAfter) {
         exit();
     }
