@@ -501,8 +501,8 @@ EOF;
                 $eventQuery->bind_param("sissdd",
                     $sessionId,
                     $jsonRequest['segment'],
-                    $jsonRequest['phone_number'],
-                    $jsonRequest['email_address'],
+                    $jsonRequest['phoneNumber'],
+                    $jsonRequest['emailAddress'],
                     $jsonRequest['latitude'],
                     $jsonRequest['longitude']
                 );
