@@ -2,13 +2,19 @@
 
 class LeagleEyeException extends Exception
 {
-    public function __construct($message = ['error' => 'Unspecified Error'], $code = 0, Exception $previous = null) {
+    private $thisException;
 
-        parent::__construct($message['error'], $code, $previous);
+    public function __construct($exception = ['error' => 'Unspecified Error'], $previous = null) {
+        $thisException = $exception;
+
+        if (!is_null($previous)) {
+            $thisException['previous'] = $previous;
+        }
+        //parent::__construct($message['error'], $code, $previous);
     }
 
     public function __toString() {
-        return __CLASS__ . ": [{$this->code}]: " . print_r($message,true) . "\n";
+        return __CLASS__ . "\n" . print_r($thisException,true) . "\n";
     }
 }
 
