@@ -612,14 +612,13 @@ function generateApiKey($sessionId) {
 }
 
 function sendResponse($response, $exitAfter = true) {
-    print_r($response);
     if ($response instanceof LeagleEyeException) {
-        print "\nInstanceOf\n";
         $base = $response->getResponse();
     } else {
-        print "\nNOT InstanceOf\n";
         $base = $response;
     }
+
+    print_r($base);
 
     if (!isset($base['statusMessage']) OR $base['statusMessage'] == '') {
         switch ($base['status']) {
