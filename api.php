@@ -614,8 +614,10 @@ function generateApiKey($sessionId) {
 function sendResponse($response, $exitAfter = true) {
     print_r($response);
     if ($response instanceof LeagleEyeException) {
+        print "\nInstanceOf\n";
         $base = $response->getResponse();
     } else {
+        print "\nNOT InstanceOf\n";
         $base = $response;
     }
 
