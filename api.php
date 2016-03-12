@@ -597,8 +597,7 @@ EOF;
 
             sendResponse($response, 201);
         } catch (Exception $e) {
-            print_r($e);
-            exit();
+            sendResponse($e);
         }
     }
 
@@ -613,21 +612,27 @@ function generateApiKey($sessionId) {
 }
 
 function sendResponse($response, $exitAfter = true) {
-    if (!isset($response['statusMessage']) OR $response['statusMessage'] == '') {
-        switch ($response['status']) {
+    if ($response instanceof Exception) {
+        $base = $response->e;
+    } else {
+        $base = $response;
+    }
+
+    if (!isset($base['statusMessage']) OR $base['statusMessage'] == '') {
+        switch ($base['status']) {
             case 200:
-                $response['statusMessage'] = "OK";
+                $base['statusMessage'] = "OK";
                 break;
             case 201:
-                $response['statusMessage'] = "Created";
+                $base['statusMessage'] = "Created";
                 break;
             case 400:
-                $response['statusMessage'] = "Bad Request";
+                $base['statusMessage'] = "Bad Request";
                 break;
         }
     }
 
-    Header("HTTP/1.1 {$response['status']} {$response['statusMessage']}");
+    Header("HTTP/1.1 {$base['status']} {$base['statusMessage']}");
     Header("Content-type: application/json");
     print json_encode($response);
     if ($exitAfter) {
