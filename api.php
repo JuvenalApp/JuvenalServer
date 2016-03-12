@@ -456,7 +456,7 @@ EOF;
 
             /** @var mysqli_stmt $eventQuery */
             if (!$eventQuery = $mysqli->prepare($sqlQuery)) {
-                throw new MySQLiStatementNotPreparedException($mysqli);
+                throw new MySQLiStatementNotPreparedException(print_r($mysqli,true));
             }
 
             do {
