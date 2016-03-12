@@ -599,9 +599,11 @@ EOF;
             $apiKeyQuery->close();
 
             $response = [
-                'session' => $sessionId,
-                'dial'    => "+1 407 934 7639",
-                'apiKey' => $apiKey,
+                'data' => [
+                    'session' => $sessionId,
+                    'dial'    => "+1 407 934 7639",
+                    'apiKey' => $apiKey
+                ],
                 'status' => 201
             ];
             sendResponse($response);
