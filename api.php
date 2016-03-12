@@ -625,6 +625,9 @@ function sendResponse($response, $exitAfter = true) {
 //
 //    $base['statusMessage'] = isset($base['statusMessage']) ? $base['statusMessage'] : "";
 
+
+    print_r($base);
+
     if ($base['statusMessage'] == '') {
         switch ($base['status']) {
             case 200:
