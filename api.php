@@ -279,7 +279,7 @@ function api_EVENTS_POST_ID_ATTACHMENTS($id) {
         sendResponse($response, 400);
     }
 
-    $status = array('files' => [],'expiration');
+    $status = array('files' => [],'expiration' => '');
 
     $i = 0;
     $errorCount = 0;
@@ -338,9 +338,7 @@ EOF;
             throw new MySQLiUpdateQueryFailedException(print_r($mysqli, true) . "\n" . print_r($update, true));
         }
     }
-    print_r($status);
-    print json_encode($status) . "\n\n";
-    sendResponse(json_encode($status), $httpCode);
+    sendResponse($status, $httpCode);
 
 }
 
