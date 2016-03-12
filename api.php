@@ -256,6 +256,13 @@ function api_EVENTS_PUT_ID($id) {
 
 }
 
+/**
+ * @param $id
+ * @throws MySQLiNothingSelectedException
+ * @throws MySQLiSelectQueryFailedException
+ * @throws MySQLiStatementNotPreparedException
+ * @throws MySQLiUpdateQueryFailedException
+ */
 function api_EVENTS_POST_ID_ATTACHMENTS($id) {
     if (!isset($id) || strlen($id) != 8) {
         $response['error'] = "No Session ID Provided";
@@ -272,15 +279,38 @@ function api_EVENTS_POST_ID_ATTACHMENTS($id) {
         sendResponse($response, 400);
     }
 
+    $status = array('files','expiration');
+
+    $i = 0;
+    $errorCount = 0;
     foreach ($_FILES as $file) {
         if ($file['error'] > 0) {
-            echo "Error: " . $file['error'];
+            $status['files'][$i]['error'] = $file['error'];
+            $status['files'][$i]['trace'] = print_r($file,true);
+            $errorCount++;
         } else {
-            Header("HTTP/1.1 201 Created");
             $destination = getcwd() . '/up/' . $id . '_' . $file['name'];
-            move_uploaded_file($file['tmp_name'], $destination);
-            //chmod($destination, 0644);
+            if (!move_uploaded_file($file['tmp_name'], $destination)) {
+                $status['files'][$i]['error'] = "Failed to move `{$file['tmp_name']}` to `{$destination}`";
+                $status['files'][$i]['trace'] = print_r($file,true);
+                $errorCount++;
+            } else {
+                //chmod($destination, 0644);
+                $status['files'][$i]['path'] = $destination;
+            }
         }
+        $i++;
+    }
+
+    if ($errorCount == 0) {
+        // Everything Worked
+        $httpCode = 200;
+    } elseif($errorCount == count($status)) {
+        // Everything failed.
+        $httpCode = 500;
+    } else {
+        // Mixed Results
+        $httpCode = 207;
     }
 
     if (getPermission("RENEW", getScopeByEventSession($id))) {
@@ -308,6 +338,8 @@ EOF;
             throw new MySQLiUpdateQueryFailedException(print_r($mysqli, true) . "\n" . print_r($update, true));
         }
     }
+
+    sendResponse(json_encode($status), $httpCode);
 
 }
 
