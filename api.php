@@ -3,16 +3,17 @@
 if (!function_exists('json_last_error_msg')) {
     function json_last_error_msg() {
         static $ERRORS = array(
-            JSON_ERROR_NONE => 'No error',
-            JSON_ERROR_DEPTH => 'Maximum stack depth exceeded',
+            JSON_ERROR_NONE           => 'No error',
+            JSON_ERROR_DEPTH          => 'Maximum stack depth exceeded',
             JSON_ERROR_STATE_MISMATCH => 'State mismatch (invalid or malformed JSON)',
-            JSON_ERROR_CTRL_CHAR => 'Control character error, possibly incorrectly encoded',
-            JSON_ERROR_SYNTAX => 'Syntax error',
-            JSON_ERROR_UTF8 => 'Malformed UTF-8 characters, possibly incorrectly encoded'
+            JSON_ERROR_CTRL_CHAR      => 'Control character error, possibly incorrectly encoded',
+            JSON_ERROR_SYNTAX         => 'Syntax error',
+            JSON_ERROR_UTF8           => 'Malformed UTF-8 characters, possibly incorrectly encoded'
         );
 
         $error = json_last_error();
-        return isset($ERRORS[$error]) ? $ERRORS[$error] : 'Unknown error';
+
+        return isset($ERRORS[ $error ]) ? $ERRORS[ $error ] : 'Unknown error';
     }
 }
 
@@ -85,12 +86,7 @@ try {
     );
 
     if ($mysqli->errno) {
-        $response = [
-            'status' => 500,
-            'error' => 'Could Not Connect to MySQLi',
-            'trace' => $mysqli
-        ];
-        throw new MySQLiNotConnectedException($response);
+        throw new MySQLiNotConnectedException([$mysqli]);
     }
 } catch (Exception $e) {
     sendResponse($response);
@@ -116,38 +112,18 @@ if (isset($apiKey) && strlen($apiKey) == 40) {
 EOF;
 
     if (!$permissionQuery = $mysqli->prepare($sqlQuery)) {
-        $response = [
-            'status' => 500,
-            'error' => 'Could Not Prepare MySQLi Statement',
-            'trace' => $mysqli
-        ];
-        throw new MySQLiStatementNotPreparedException($response);
+        throw new MySQLiStatementNotPreparedException([$sqlQuery, $permissionQuery]);
     }
 
     $permissionQuery->bind_param("s", $apiKey);
     if (!$permissionQuery->execute()) {
-        $response = [
-            'status' => 500,
-            'error' => 'Could Not Perform SELECT',
-            'trace' => [
-                $mysqli,
-                $permissionQuery
-            ]
-        ];
-        throw new MySQLiSelectQueryFailedException($response);
+        throw new MySQLiSelectQueryFailedException([$sqlQuery, $permissionQuery]);
     }
 
     $result = $permissionQuery->get_result();
 
     if ($result->num_rows < 1) {
-        $response = [
-            'trace' => [
-                $mysqli,
-                $permissionQuery,
-                $result
-            ]
-        ];
-        throw new MySQLiNothingSelectedException($response);
+        throw new MySQLiNothingSelectedException([$sqlQuery, $permissionQuery, $result]);
     }
     $permissions = $result->fetch_array(MYSQLI_ASSOC);
 
@@ -183,9 +159,13 @@ EOF;
                 break;
             default:
                 $response = [
-                    'status' => 500,
-                    'error' => 'Database Sanity Error',
-                    'trace' => $mysqli
+                    'status' => [
+                        'code' => 500
+                    ],
+                    'error'  => [
+                        'message' => 'Database Sanity Error'
+                    ],
+                    'trace'  => [$mysqli]
                 ];
                 throw new WhatTheHeckIsThisException($response);
                 break;
@@ -203,36 +183,22 @@ EOF;
 EOF;
 
             if (!$scopeQuery = $mysqli->prepare($sqlQuery)) {
-                throw new MySQLiStatementNotPreparedException($sqlQuery . "\n\n" . print_r($mysqli, true));
+                throw new MySQLiStatementNotPreparedException([$sqlQuery, $scopeQuery]);
             }
 
             /** @var string $parameter */
             $temp = (int)$parameter;
             $scopeQuery->bind_param("i", $temp);
             if (!$scopeQuery->execute()) {
-                $response = [
-                    'status' => 500,
-                    'error' => 'Could Not Perform SELECT',
-                    'trace' => [
-                        $mysqli,
-                        $scopeQuery
-                    ]
-                ];
-                throw new MySQLiSelectQueryFailedException($response);
+                throw new MySQLiSelectQueryFailedException([$sqlQuery, $scopeQuery]);
             }
 
             $result = $scopeQuery->get_result();
 
             if ($result->num_rows < 1) {
-                $response = [
-                    'trace' => [
-                        $mysqli,
-                        $scopeQuery,
-                        $result
-                    ]
-                ];
-                throw new MySQLiNothingSelectedException($response);
+                throw new MySQLiNothingSelectedException([$sqlQuery, $scopeQuery, $result]);
             }
+
             $scopeResult = $result->fetch_array(MYSQLI_ASSOC);
 
             if (isset($scopeResult['productkey'])) {
@@ -252,9 +218,15 @@ try {
         $action();
     } else {
         $response = [
-            'status' => 400,
-            'error' => "HTTP `{$method}` not supported for object `{$object}`.",
-            'trace' => $mysqli
+            'status' => [
+                'code' => 400
+            ],
+            'error'  => [
+                'message' => "HTTP `{$method}` not supported for object `{$object}`."
+            ],
+            'trace'  => [
+                $mysqli
+            ]
         ];
         throw new BadRequestException($response);
     }
@@ -279,8 +251,15 @@ function api_EVENTS_GET() {
             break;
         default:
             $response = [
-                'status' => 400,
-                'error' => 'What are you doing?',
+                'status' => [
+                    'code' => 400
+                ],
+                'error'  => [
+                    'message' => 'What are you doing?'
+                ],
+                'trace'  => [
+                    $path
+                ]
             ];
             throw new BadRequestException($response);
             break;
@@ -306,17 +285,17 @@ function api_EVENTS_GET() {
             }
         } else {
             $response = [
-                'status' => 400,
-                'error' => 'Not supported',
+                'status' => ['code'=>400],
+                'error'  => ['message'=>'Not supported']
             ];
             throw new BadRequestException($response);
         }
     }
 
-    if (!getPermission("VIEW", getScopeByEventSession($id))) {
+    if (!getPermission("VIEW", getScopeByEventSession(''))) {
         $response = [
-            'status' => 401,
-            'error' => "Underprivileged API Key.",
+            'status' => ['code'=>401],
+            'error'  => ['message'=>'Underprivileged API Key.']
         ];
         throw new BadRequestException($response);
     }
@@ -351,23 +330,23 @@ function api_EVENTS_POST_ID_ATTACHMENTS($id) {
         sendResponse($response, 400);
     }
 
-    $status = array('files' => [],'errorCount' => 0);
+    $status = array('files' => [], 'errorCount' => 0);
 
     $i = 0;
     foreach ($_FILES as $file) {
-        $status['files'][$i]['trace'] = $file;
+        $status['files'][ $i ]['trace'] = $file;
 
         if ($file['error'] > 0) {
-            $status['files'][$i]['error'] = $file['error'];
+            $status['files'][ $i ]['error'] = $file['error'];
             $status['errorCount']++;
         } else {
             $destination = getcwd() . '/up/' . $id . '_' . $file['name'];
             if (!move_uploaded_file($file['tmp_name'], $destination)) {
-                $status['files'][$i]['error'] = "Failed to move `{$file['tmp_name']}` to `{$destination}`";
+                $status['files'][ $i ]['error'] = "Failed to move `{$file['tmp_name']}` to `{$destination}`";
                 $status['errorCount']++;
             } else {
                 //chmod($destination, 0644);
-                $status['files'][$i]['path'] = $destination;
+                $status['files'][ $i ]['path'] = $destination;
             }
         }
         $i++;
@@ -376,7 +355,7 @@ function api_EVENTS_POST_ID_ATTACHMENTS($id) {
     if ($status['errorCount'] == 0) {
         // Everything Worked
         $httpCode = 200;
-    } elseif($status['errorCount'] == count($status['files'])) {
+    } elseif ($status['errorCount'] == count($status['files'])) {
         // Everything failed.
         $httpCode = 500;
     } else {
@@ -457,8 +436,8 @@ function api_EVENTS_POST() {
             if (!$jsonRequest = json_decode($_POST['request'], true)) {
                 $response = [
                     'status' => 400,
-                    'error' => "Malformed JSON",
-                    'trace' => [
+                    'error'  => "Malformed JSON",
+                    'trace'  => [
                         $jsonRequest
                     ]
                 ];
@@ -466,11 +445,11 @@ function api_EVENTS_POST() {
             }
 
             $requiredFields = [
-                'segment' => [
+                'segment'      => [
                     'filter' => FILTER_VALIDATE_INT,
                 ],
-                'phoneNumber' => [
-                    'filter' => FILTER_VALIDATE_REGEXP,
+                'phoneNumber'  => [
+                    'filter'  => FILTER_VALIDATE_REGEXP,
                     'options' => [
                         'options' => [
                             'regexp' => "/^\+? ?[0-9 ]+$/"
@@ -480,31 +459,31 @@ function api_EVENTS_POST() {
                 'emailAddress' => [
                     'filter' => FILTER_VALIDATE_EMAIL,
                 ],
-                'latitude' => [
+                'latitude'     => [
                     'filter' => FILTER_VALIDATE_FLOAT,
                 ],
-                'longitude' => [
+                'longitude'    => [
                     'filter' => FILTER_VALIDATE_FLOAT,
                 ]
             ];
 
             foreach ($requiredFields as $key => $parameters) {
-                if (!isset($jsonRequest[$key])) {
+                if (!isset($jsonRequest[ $key ])) {
                     $response = [
                         'status' => 400,
-                        'error' => "Required parameter `{$key}` is missing.",
+                        'error'  => "Required parameter `{$key}` is missing.",
                     ];
                     throw new BadRequestException($response);
                 }
 
-                $value = $jsonRequest[$key];
-                $filter = $parameters['filter'];
+                $value   = $jsonRequest[ $key ];
+                $filter  = $parameters['filter'];
                 $options = isset($parameters['options']) ? $parameters['options'] : [];
 
                 if (!filter_var($value, $filter, $options)) {
                     $response = [
                         'status' => 400,
-                        'error' => "Parameter `{$key}`:`{$value}` is not valid.",
+                        'error'  => "Parameter `{$key}`:`{$value}` is not valid.",
                     ];
                     throw new BadRequestException($response);
                 }
@@ -525,7 +504,7 @@ EOF;
 
             /** @var mysqli_stmt $eventQuery */
             if (!$eventQuery = $mysqli->prepare($sqlQuery)) {
-                throw new MySQLiStatementNotPreparedException(print_r($mysqli,true));
+                throw new MySQLiStatementNotPreparedException(print_r($mysqli, true));
             }
 
             do {
@@ -573,7 +552,7 @@ EOF;
 
             /** @var mysqli_stmt $apiKeyQuery */
             if (!$apiKeyQuery = $mysqli->prepare($sqlQuery)) {
-                throw new MySQLiStatementNotPreparedException($mysqli);
+                throw new MySQLiStatementNotPreparedException([$mysqli]);
             }
 
             do {
@@ -599,10 +578,10 @@ EOF;
             $apiKeyQuery->close();
 
             $response = [
-                'data' => [
+                'data'   => [
                     'session' => $sessionId,
                     'dial'    => "+1 407 934 7639",
-                    'apiKey' => $apiKey
+                    'apiKey'  => $apiKey
                 ],
                 'status' => 201
             ];
@@ -638,34 +617,31 @@ function sendResponse($response, $exitAfter = true) {
 
 
     if (!isset($base['status'])) {
-        $base['status'] = null;
-    }
-    if (!isset($base['statusMessage'])) {
-        $base['statusMessage'] = '';
+        $base['status'] = ['code' => null, 'message' => ''];
     }
 
-    if ($base['statusMessage'] == '') {
-        switch ($base['status']) {
+    if ($base['status']['message'] == '') {
+        switch ($base['status']['code']) {
             case 200:
-                $base['statusMessage'] = "OK";
+                $base['status']['message'] = "OK";
                 break;
             case 201:
-                $base['statusMessage'] = "Created";
+                $base['status']['message'] = "Created";
                 break;
             case 400:
-                $base['statusMessage'] = "Bad Request";
+                $base['status']['message'] = "Bad Request";
                 break;
             case 500:
-                $base['statusMessage'] = "Internal Server Error";
+                $base['status']['message'] = "Internal Server Error";
                 break;
             case null:
-                $base['status'] = 500;
-                $base['statusMessage'] = "No Status Provided";
+                $base['status']['code']    = 500;
+                $base['status']['message'] = "No Status Provided";
                 break;
         }
     }
 
-    Header("HTTP/1.1 {$base['status']} {$base['statusMessage']}");
+    Header("HTTP/1.1 {$base['status']['code']} {$base['status']['message']}");
     Header("Content-type: application/json");
     print json_encode($base);
     if ($exitAfter) {
@@ -716,18 +692,18 @@ function getScopeByEventSession($event) {
 EOF;
 
     if (!$scopeQuery = $mysqli->prepare($sqlQuery)) {
-        throw new MySQLiStatementNotPreparedException(print_r($mysqli, true));
+        throw new MySQLiStatementNotPreparedException( [ $sqlQuery, $scopeQuery ] );
     }
 
     $scopeQuery->bind_param("s", $event);
     if (!$scopeQuery->execute()) {
-        throw new MySQLiSelectQueryFailedException();
+        throw new MySQLiSelectQueryFailedException( [ $sqlQuery, $scopeQuery ] );
     }
 
     $result = $scopeQuery->get_result();
 
     if ($result->num_rows < 1) {
-        throw new MySQLiNothingSelectedException();
+        throw new MySQLiNothingSelectedException( [ $sqlQuery, $scopeQuery , $result] );
     }
 
     return $result->fetch_array(MYSQLI_ASSOC);
