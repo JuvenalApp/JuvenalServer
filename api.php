@@ -85,11 +85,15 @@ try {
     );
 
     if ($mysqli->errno) {
-        throw new MySQLiNotConnectedError($mysqli->errno . ": " . $mysqli->error);
+        $response = [
+            'status' => 500,
+            'error' => 'Could Not Connect to MySQLi',
+            'trace' => $mysqli
+        ];
+        throw new MySQLiNotConnectedException($response);
     }
 } catch (Exception $e) {
-    print_r($e);
-    exit();
+    sendResponse($response);
 }
 
 if (isset($apiKey) && strlen($apiKey) == 40) {
@@ -112,18 +116,38 @@ if (isset($apiKey) && strlen($apiKey) == 40) {
 EOF;
 
     if (!$permissionQuery = $mysqli->prepare($sqlQuery)) {
-        throw new MySQLiStatementNotPreparedException(print_r($mysqli, true));
+        $response = [
+            'status' => 500,
+            'error' => 'Could Not Prepare MySQLi Statement',
+            'trace' => $mysqli
+        ];
+        throw new MySQLiStatementNotPreparedException($response);
     }
 
     $permissionQuery->bind_param("s", $apiKey);
     if (!$permissionQuery->execute()) {
-        throw new MySQLiSelectQueryFailedException();
+        $response = [
+            'status' => 500,
+            'error' => 'Could Not Perform SELECT',
+            'trace' => [
+                $mysqli,
+                $permissionQuery
+            ]
+        ];
+        throw new MySQLiSelectQueryFailedException($response);
     }
 
     $result = $permissionQuery->get_result();
 
     if ($result->num_rows < 1) {
-        throw new MySQLiNothingSelectedException();
+        $response = [
+            'trace' => [
+                $mysqli,
+                $permissionQuery,
+                $result
+            ]
+        ];
+        throw new MySQLiNothingSelectedException($response);
     }
     $permissions = $result->fetch_array(MYSQLI_ASSOC);
 
@@ -158,7 +182,12 @@ EOF;
                 $parameter        = $permissions['scopekey'];
                 break;
             default:
-                throw new Exception("Invalid Scope");
+                $response = [
+                    'status' => 500,
+                    'error' => 'Database Sanity Error',
+                    'trace' => $mysqli
+                ];
+                throw new WhatTheHeckIsThisException($response);
                 break;
         }
 
@@ -181,13 +210,28 @@ EOF;
             $temp = (int)$parameter;
             $scopeQuery->bind_param("i", $temp);
             if (!$scopeQuery->execute()) {
-                throw new MySQLiSelectQueryFailedException($sqlQuery . "\n\n" . print_r($mysqli, true) . print_r($scopeQuery, true));
+                $response = [
+                    'status' => 500,
+                    'error' => 'Could Not Perform SELECT',
+                    'trace' => [
+                        $mysqli,
+                        $scopeQuery
+                    ]
+                ];
+                throw new MySQLiSelectQueryFailedException($response);
             }
 
             $result = $scopeQuery->get_result();
 
             if ($result->num_rows < 1) {
-                throw new MySQLiNothingSelectedException(print_r($result, true));
+                $response = [
+                    'trace' => [
+                        $mysqli,
+                        $scopeQuery,
+                        $result
+                    ]
+                ];
+                throw new MySQLiNothingSelectedException($response);
             }
             $scopeResult = $result->fetch_array(MYSQLI_ASSOC);
 
@@ -207,7 +251,12 @@ try {
         $action = (string)$action;
         $action();
     } else {
-        throw new BadRequestException();
+        $response = [
+            'status' => 400,
+            'error' => "HTTP `{$method}` not supported for object `{$object}`.",
+            'trace' => $mysqli
+        ];
+        throw new BadRequestException($response);
     }
 } catch (BadRequestException $bre) {
     $message = $bre->getMessage();
@@ -221,21 +270,10 @@ try {
 exit();
 
 function api_EVENTS_GET() {
-    global $apiKey;
+    global $mysqli;
     global $path;
 
-    if ($apiKey != "d9cef133acdb2c35c21a20031a5dfc10f77d03f4") {
-        throw new BadRequestException();
-    }
-
-    $attachmentIndex = '';
-    $object2         = '';
-    $session         = '';
-
     switch (count($path)) {
-        /** @noinspection PhpMissingBreakStatementInspection */
-        case 3:
-            $attachmentIndex = $path[2];
         /** @noinspection PhpMissingBreakStatementInspection */
         case 2:
             $object2 = $path[1];
@@ -245,27 +283,50 @@ function api_EVENTS_GET() {
         case 0:
             break;
         default:
-            throw new BadRequestException();
+            $response = [
+                'status' => 400,
+                'error' => 'What are you doing?',
+            ];
+            throw new BadRequestException($response);
             break;
     }
 
-    if (strlen($session) != 8) {
-        throw new BadRequestException();
+    $funcCall = __FUNCTION__;
+    if (isset($session) && strlen($session) > 0) {
+        $funcCall  = $funcCall . '_ID';
+        $parameter = $session;
+        if (isset($object2) && strlen($object2) > 0) {
+            $funcCall = $funcCall . '_' . strtoupper($object2);
+        }
     }
 
-    if (isset($object2) && strlen($object2) > 0) {
-        if ($object2 != "attachments") {
-            throw new BadRequestException();
-        } else {
-            if (isset($attachmentIndex)) {
-                print "Attachment information.";
+    if ($funcCall != __FUNCTION__) {
+        if (function_exists($funcCall)) {
+            // Explicitly cast $action as a string to reassure the debugger.
+            $funcCall = (string)$funcCall;
+            if (isset($parameter)) {
+                $funcCall($parameter);
             } else {
-                print "Attachment list.";
+                $funcCall();
             }
+        } else {
+            $response = [
+                'status' => 400,
+                'error' => 'Not supported',
+            ];
+            throw new BadRequestException($response);
         }
-    } else {
-        print "Event list.";
     }
+
+    if (!getPermission("VIEW", getScopeByEventSession($id))) {
+        $response = [
+            'status' => 401,
+            'error' => "Underprivileged API Key.",
+        ];
+        throw new BadRequestException($response);
+    }
+
+    print "Event list.";
 }
 
 function api_EVENTS_PUT_ID($id) {
@@ -398,34 +459,8 @@ function api_EVENTS_POST() {
         }
     } else {
         try {
-            $jsonRequest = json_decode($_POST['request'], true);
+            if (!$jsonRequest = json_decode($_POST['request'], true)) {
 
-            if (!$jsonRequest) {
-                print json_last_error_msg() . "\n";
-
-                switch (json_last_error()) {
-                    case JSON_ERROR_NONE:
-                        echo ' - No errors';
-                        break;
-                    case JSON_ERROR_DEPTH:
-                        echo ' - Maximum stack depth exceeded';
-                        break;
-                    case JSON_ERROR_STATE_MISMATCH:
-                        echo ' - Underflow or the modes mismatch';
-                        break;
-                    case JSON_ERROR_CTRL_CHAR:
-                        echo ' - Unexpected control character found';
-                        break;
-                    case JSON_ERROR_SYNTAX:
-                        echo ' - Syntax error, malformed JSON';
-                        break;
-                    case JSON_ERROR_UTF8:
-                        echo ' - Malformed UTF-8 characters, possibly incorrectly encoded';
-                        break;
-                    default:
-                        echo ' - Unknown error';
-                        break;
-                }
                 throw new InvalidJsonException();
             }
 
@@ -576,19 +611,22 @@ function generateApiKey($sessionId) {
     return sha1($sessionId . microtime(true) . mt_rand(10000, 90000));
 }
 
-function sendResponse($response, $code, $message = '', $exitAfter = true) {
-    if ($message == '') {
-        switch ($code) {
+function sendResponse($response, $exitAfter = true) {
+    if (!isset($response['statusMessage']) OR $response['statusMessage'] == '') {
+        switch ($response['status']) {
+            case 200:
+                $response['statusMessage'] = "OK";
+                break;
             case 201:
-                $message = "Created";
+                $response['statusMessage'] = "Created";
                 break;
             case 400:
-                $message = "Bad Request";
+                $response['statusMessage'] = "Bad Request";
                 break;
         }
     }
 
-    Header("HTTP/1.1 {$code} {$message}");
+    Header("HTTP/1.1 {$response['status']} {$response['statusMessage']}");
     Header("Content-type: application/json");
     print json_encode($response);
     if ($exitAfter) {
