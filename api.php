@@ -285,8 +285,8 @@ function api_EVENTS_GET() {
             }
         } else {
             $response = [
-                'status' => ['code'=>400],
-                'error'  => ['message'=>'Not supported']
+                'status' => ['code' => 400],
+                'error'  => ['message' => 'Not supported']
             ];
             throw new BadRequestException($response);
         }
@@ -294,8 +294,8 @@ function api_EVENTS_GET() {
 
     if (!getPermission("VIEW", getScopeByEventSession(''))) {
         $response = [
-            'status' => ['code'=>401],
-            'error'  => ['message'=>'Underprivileged API Key.']
+            'status' => ['code' => 401],
+            'error'  => ['message' => 'Underprivileged API Key.']
         ];
         throw new BadRequestException($response);
     }
@@ -482,8 +482,12 @@ function api_EVENTS_POST() {
 
                 if (!filter_var($value, $filter, $options)) {
                     $response = [
-                        'status' => 400,
-                        'error'  => "Parameter `{$key}`:`{$value}` is not valid.",
+                        'status' => [
+                            'code' => 400
+                        ],
+                        'error'  => [
+                            'message' => "Parameter `{$key}`:`{$value}` is not valid."
+                        ]
                     ];
                     throw new BadRequestException($response);
                 }
@@ -692,18 +696,18 @@ function getScopeByEventSession($event) {
 EOF;
 
     if (!$scopeQuery = $mysqli->prepare($sqlQuery)) {
-        throw new MySQLiStatementNotPreparedException( [ $sqlQuery, $scopeQuery ] );
+        throw new MySQLiStatementNotPreparedException([$sqlQuery, $scopeQuery]);
     }
 
     $scopeQuery->bind_param("s", $event);
     if (!$scopeQuery->execute()) {
-        throw new MySQLiSelectQueryFailedException( [ $sqlQuery, $scopeQuery ] );
+        throw new MySQLiSelectQueryFailedException([$sqlQuery, $scopeQuery]);
     }
 
     $result = $scopeQuery->get_result();
 
     if ($result->num_rows < 1) {
-        throw new MySQLiNothingSelectedException( [ $sqlQuery, $scopeQuery , $result] );
+        throw new MySQLiNothingSelectedException([$sqlQuery, $scopeQuery, $result]);
     }
 
     return $result->fetch_array(MYSQLI_ASSOC);
