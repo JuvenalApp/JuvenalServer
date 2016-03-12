@@ -598,12 +598,13 @@ EOF;
             $eventQuery->close();
             $apiKeyQuery->close();
 
-            $response            = array();
-            $response['session'] = $sessionId;
-            $response['dial']    = "+1 407 934 7639";
-            $response['apiKey']  = $apiKey;
-
-            sendResponse($response, 201);
+            $response = [
+                'session' => $sessionId,
+                'dial'    => "+1 407 934 7639",
+                'apiKey' => $apiKey,
+                'status' => 201
+            ];
+            sendResponse($response);
         } catch (Exception $e) {
             sendResponse($e);
         }
