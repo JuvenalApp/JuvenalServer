@@ -446,7 +446,7 @@ function api_EVENTS_POST() {
         dev__events
         (
             session,
-            eventsegment,
+            segmentkey,
             phone_number,
             email_address,
             latitude,
