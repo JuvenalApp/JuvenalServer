@@ -279,21 +279,20 @@ function api_EVENTS_POST_ID_ATTACHMENTS($id) {
         sendResponse($response, 400);
     }
 
-    $status = array('files' => [],'expiration' => '');
+    $status = array('files' => [],'errorCount' => 0);
 
     $i = 0;
-    $errorCount = 0;
     foreach ($_FILES as $file) {
+        $status['files'][$i]['trace'] = $file;
+
         if ($file['error'] > 0) {
             $status['files'][$i]['error'] = $file['error'];
-            $status['files'][$i]['trace'] = print_r($file,true);
-            $errorCount++;
+            $status['errorCount']++;
         } else {
             $destination = getcwd() . '/up/' . $id . '_' . $file['name'];
             if (!move_uploaded_file($file['tmp_name'], $destination)) {
                 $status['files'][$i]['error'] = "Failed to move `{$file['tmp_name']}` to `{$destination}`";
-                $status['files'][$i]['trace'] = print_r($file,true);
-                $errorCount++;
+                $status['errorCount']++;
             } else {
                 //chmod($destination, 0644);
                 $status['files'][$i]['path'] = $destination;
@@ -302,10 +301,10 @@ function api_EVENTS_POST_ID_ATTACHMENTS($id) {
         $i++;
     }
 
-    if ($errorCount == 0) {
+    if ($status['errorCount'] == 0) {
         // Everything Worked
         $httpCode = 200;
-    } elseif($errorCount == count($status)) {
+    } elseif($status['errorCount'] == count($status['files'])) {
         // Everything failed.
         $httpCode = 500;
     } else {
