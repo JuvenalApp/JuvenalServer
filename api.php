@@ -258,13 +258,8 @@ try {
         ];
         throw new BadRequestException($response);
     }
-} catch (BadRequestException $bre) {
-    $message = $bre->getMessage();
-    if (strlen($message) == 0) {
-        $message = "Bad Request";
-    }
-    Header("HTTP/1.1 400 {$message}");
-    exit();
+} catch (Exception $e) {
+    sendResponse($e);
 }
 
 exit();
@@ -460,8 +455,14 @@ function api_EVENTS_POST() {
     } else {
         try {
             if (!$jsonRequest = json_decode($_POST['request'], true)) {
-
-                throw new InvalidJsonException();
+                $response = [
+                    'status' => 400,
+                    'error' => "Malformed JSON",
+                    'trace' => [
+                        $jsonRequest
+                    ]
+                ];
+                throw new InvalidJsonException($response);
             }
 
             $requiredFields = [
