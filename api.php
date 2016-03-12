@@ -415,31 +415,68 @@ function api_EVENTS_POST() {
                 throw new InvalidJsonException();
             }
 
-            foreach ($jsonRequest as $key => $value) {
-                $filter  = null;
-                $options = [];
-                switch ($key) {
-                    case 'segment':
-                        $filter = FILTER_VALIDATE_INT;
-                        break;
-                    case 'phone_number':
-                        $filter  = FILTER_VALIDATE_REGEXP;
-                        $options = array("options" => array("regexp" => "/^\+? ?[0-9 ]+$/"));
-                        break;
-                    case 'email_address':
-                        $filter = FILTER_VALIDATE_EMAIL;
-                        break;
-                    case 'latitude':
-                    case 'longitude':
-                        $filter = FILTER_VALIDATE_FLOAT;
-                        break;
-                    default:
-                        throw new UnsanitizedInputException($key);
+            $requiredFields = [
+                'segment' => [
+                    'filter' => FILTER_VALIDATE_INT,
+                ],
+                'phoneNumber' => [
+                    'filter' => FILTER_VALIDATE_REGEXP,
+                    'options' => [
+                        'options' => [
+                            'regexp' => "/^\+? ?[0-9 ]+$/"
+                        ]
+                    ]
+                ],
+                'emailAddress' => [
+                    'filter' => FILTER_VALIDATE_EMAIL,
+                ],
+                'latitude' => [
+                    'filter' => FILTER_VALIDATE_FLOAT,
+                ],
+                'longitude' => [
+                    'filter' => FILTER_VALIDATE_FLOAT,
+                ]
+            ];
+
+            foreach ($requiredFields as $key) {
+                if (!isset($jsonRequest[$key])) {
+                    throw new BadRequestException("Required parameter `{$key}` is missing.");
                 }
+
+                $value = $jsonRequest[$key];
+                $filter = $requiredFields['filter'];
+                $options = isset($requiredFields[$key]['options']) ? $requiredFields[$key]['options'] : [];
+
                 if (!filter_var($value, $filter, $options)) {
-                    throw new BadRequestException("Parameter '{$key}':'{$value}' is not valid.");
+                    throw new BadRequestException("Parameter `{$key}`:`{$value}` is not valid.");
                 }
             }
+
+//            foreach ($jsonRequest as $key => $value) {
+//                $filter  = null;
+//                $options = [];
+//                switch ($key) {
+//                    case 'segment':
+//                        $filter = FILTER_VALIDATE_INT;
+//                        break;
+//                    case 'phone_number':
+//                        $filter  = FILTER_VALIDATE_REGEXP;
+//                        $options = array("options" => array("regexp" => "/^\+? ?[0-9 ]+$/"));
+//                        break;
+//                    case 'email_address':
+//                        $filter = FILTER_VALIDATE_EMAIL;
+//                        break;
+//                    case 'latitude':
+//                    case 'longitude':
+//                        $filter = FILTER_VALIDATE_FLOAT;
+//                        break;
+//                    default:
+//                        throw new UnsanitizedInputException($key);
+//                }
+//                if (!filter_var($value, $filter, $options)) {
+//                    throw new BadRequestException("Parameter '{$key}':'{$value}' is not valid.");
+//                }
+//            }
 
             $sqlQuery = <<<EOF
     INSERT INTO
