@@ -22,6 +22,68 @@ class LeagleEyeException extends Exception
     }
 }
 
+class LeagleEyeMySQLiException extends LeagleEyeException {
+    public function __construct($message='', $trace = [], $previous = null) {
+        $response = [
+            'status' => [
+                'code' => 500
+            ],
+            'error' => [
+                'message' => $message,
+                'trace' => $trace
+            ]
+        ];
+    }
+}
+
+class MySQLiNotConnectedException extends LeagleEyeMySQLiException {
+    function __construct(array $trace, $previous = null) {
+        parent::__construct(__CLASS__, $trace, $previous);
+    }
+}
+
+class MySQLiStatementNotPreparedException extends LeagleEyeMySQLiException {
+    function __construct(array $trace, $previous = null) {
+        parent::__construct(__CLASS__, $trace, $previous);
+    }
+}
+
+class MySQLiSelectQueryFailedException extends LeagleEyeMySQLiException {
+    function __construct(array $trace, $previous = null) {
+        parent::__construct(__CLASS__, $trace, $previous);
+    }
+}
+
+class MySQLiInsertQueryFailedException extends LeagleEyeMySQLiException {
+    function __construct(array $trace, $previous = null) {
+        parent::__construct(__CLASS__, $trace, $previous);
+    }
+}
+
+class MySQLiUpdateQueryFailedException extends LeagleEyeMySQLiException {
+    function __construct(array $trace, $previous = null) {
+        parent::__construct(__CLASS__, $trace, $previous);
+    }
+}
+
+class MySQLiDeleteQueryFailedException extends LeagleEyeMySQLiException {
+    function __construct(array $trace, $previous = null) {
+        parent::__construct(__CLASS__, $trace, $previous);
+    }
+}
+
+class MySQLiRowNotInsertedException extends LeagleEyeMySQLiException {
+    function __construct(array $trace, $previous = null) {
+        parent::__construct(__CLASS__, $trace, $previous);
+    }
+}
+
+class MySQLiNothingSelectedException extends LeagleEyeMySQLiException {
+    function __construct(array $trace, $previous = null) {
+        parent::__construct(__CLASS__, $trace, $previous);
+    }
+}
+
 
 class BadRequestException extends LeagleEyeException { }
 class WhatTheHeckIsThisException extends LeagleEyeException { }
@@ -31,17 +93,5 @@ class InvalidJsonException extends LeagleEyeException { }
 class UnsanitizedInputException extends LeagleEyeException {}
 
 class ApiKeyNotPrivilegedException extends LeagleEyeException {}
-
-
-class MySQLiNotConnectedException extends LeagleEyeException { }
-class MySQLiStatementNotPreparedException extends LeagleEyeException { }
-
-class MySQLiSelectQueryFailedException extends LeagleEyeException { }
-class MySQLiInsertQueryFailedException extends LeagleEyeException { }
-class MySQLiUpdateQueryFailedException extends LeagleEyeException { }
-class MySQLiDeleteQueryFailedException extends LeagleEyeException { }
-
-class MySQLiRowNotInsertedException extends LeagleEyeException { }
-class MySQLiNothingSelectedException extends LeagleEyeException { }
 
 ?>
