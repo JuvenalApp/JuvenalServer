@@ -618,13 +618,14 @@ function sendResponse($response, $exitAfter = true) {
         $base = $response;
     }
 
-    if (!isset($base['status'])) {
-        $base['status'] = "500";
-        $base['statusMessage'] = "No Status Provided";
-    }
-    $base['statusMessage'] = isset($base['statusMessage']) ? $base['statusMessage'] : "";
+//    if (!isset($base['status'])) {
+//        $base['status'] = "500";
+//        $base['statusMessage'] = "No Status Provided";
+//    }
+//
+//    $base['statusMessage'] = isset($base['statusMessage']) ? $base['statusMessage'] : "";
 
-    if (!isset($base['statusMessage']) OR $base['statusMessage'] == '') {
+    if ($base['statusMessage'] == '') {
         switch ($base['status']) {
             case 200:
                 $base['statusMessage'] = "OK";
@@ -634,6 +635,13 @@ function sendResponse($response, $exitAfter = true) {
                 break;
             case 400:
                 $base['statusMessage'] = "Bad Request";
+                break;
+            case 500:
+                $base['statusMessage'] = "Internal Server Error";
+                break;
+            case null:
+                $base['status'] = 500;
+                $base['statusMessage'] = "No Status Provided";
                 break;
         }
     }
