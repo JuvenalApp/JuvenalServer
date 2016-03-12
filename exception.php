@@ -13,6 +13,10 @@ class LeagleEyeException extends Exception
         //parent::__construct($message['error'], $code, $previous);
     }
 
+    public public function getResponse() {
+        return $this->e;
+    }
+
     public function __toString() {
         return __CLASS__ . "\n" . print_r($this->e,true) . "\n";
     }
