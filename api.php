@@ -450,32 +450,6 @@ function api_EVENTS_POST() {
                 }
             }
 
-//            foreach ($jsonRequest as $key => $value) {
-//                $filter  = null;
-//                $options = [];
-//                switch ($key) {
-//                    case 'segment':
-//                        $filter = FILTER_VALIDATE_INT;
-//                        break;
-//                    case 'phone_number':
-//                        $filter  = FILTER_VALIDATE_REGEXP;
-//                        $options = array("options" => array("regexp" => "/^\+? ?[0-9 ]+$/"));
-//                        break;
-//                    case 'email_address':
-//                        $filter = FILTER_VALIDATE_EMAIL;
-//                        break;
-//                    case 'latitude':
-//                    case 'longitude':
-//                        $filter = FILTER_VALIDATE_FLOAT;
-//                        break;
-//                    default:
-//                        throw new UnsanitizedInputException($key);
-//                }
-//                if (!filter_var($value, $filter, $options)) {
-//                    throw new BadRequestException("Parameter '{$key}':'{$value}' is not valid.");
-//                }
-//            }
-
             $sqlQuery = <<<EOF
     INSERT INTO
         dev__events
