@@ -690,24 +690,26 @@ function doMySQLiSelect($sqlQuery, $parameters) {
 
     $boundParameters = [''];
 
-    foreach ($parameters as $type => $data) {
-        $boundParameters[0] = $boundParameters[0] . $type;
-        switch ($type) {
-            case 's':
-                $boundParameters[] = (string)$data;
-                break;
-            case 'i':
-                $boundParameters[] = (int)$data;
-                break;
-            case 'd':
-                $boundParameters[] = (double)$data;
-                break;
-            case 'b':
-                $boundParameters[] = $data;
-                break;
-            default:
-                throw new WhatTheHeckIsThisException([$type]);
-                break;
+    foreach ($parameters as $parameter) {
+        foreach ($parameter as $type => $data) {
+            $boundParameters[0] = $boundParameters[0] . $type;
+            switch ($type) {
+                case 's':
+                    $boundParameters[] = (string)$data;
+                    break;
+                case 'i':
+                    $boundParameters[] = (int)$data;
+                    break;
+                case 'd':
+                    $boundParameters[] = (double)$data;
+                    break;
+                case 'b':
+                    $boundParameters[] = $data;
+                    break;
+                default:
+                    throw new WhatTheHeckIsThisException([$type]);
+                    break;
+            }
         }
     }
 
