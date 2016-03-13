@@ -99,8 +99,6 @@ EOF;
         $permissions = doMySQLiSelect($sqlQuery, [['s' => $apiKey]])[0];
     } catch (MySQLiNothingSelectedException $e) {
         throw new ApiKeyNotPrivilegedException([$apiKey], $e);
-    } catch (LeagleEyeException $e) {
-        sendResponse($e);
     }
 
 //    if (!$permissionQuery = $mysqli->prepare($sqlQuery)) {
