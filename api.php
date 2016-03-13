@@ -1,22 +1,5 @@
 <?php
 
-if (!function_exists('json_last_error_msg')) {
-    function json_last_error_msg() {
-        static $ERRORS = array(
-            JSON_ERROR_NONE           => 'No error',
-            JSON_ERROR_DEPTH          => 'Maximum stack depth exceeded',
-            JSON_ERROR_STATE_MISMATCH => 'State mismatch (invalid or malformed JSON)',
-            JSON_ERROR_CTRL_CHAR      => 'Control character error, possibly incorrectly encoded',
-            JSON_ERROR_SYNTAX         => 'Syntax error',
-            JSON_ERROR_UTF8           => 'Malformed UTF-8 characters, possibly incorrectly encoded'
-        );
-
-        $error = json_last_error();
-
-        return isset($ERRORS[ $error ]) ? $ERRORS[ $error ] : 'Unknown error';
-    }
-}
-
 error_reporting(E_ALL);
 
 require 'exception.php';
@@ -237,7 +220,7 @@ try {
 exit();
 
 function api_EVENTS_GET() {
-    global $mysqli;
+    //global $mysqli;
     global $path;
 
     switch (count($path)) {
@@ -309,87 +292,89 @@ function api_EVENTS_PUT_ID($id) {
 
 /**
  * @param $id
+ * @throws ApiKeyNotPrivilegedException
+ * @throws InvalidIdentifierException
  * @throws MySQLiNothingSelectedException
  * @throws MySQLiSelectQueryFailedException
  * @throws MySQLiStatementNotPreparedException
- * @throws MySQLiUpdateQueryFailedException
+ * @throws NoFilesProvidedException
  */
 function api_EVENTS_POST_ID_ATTACHMENTS($id) {
     if (!isset($id) || strlen($id) != 8) {
-        $response['error'] = "No Session ID Provided";
-        sendResponse($response, 400);
+        throw new InvalidIdentifierException();
     }
 
     if (!getPermission("UPLOAD", getScopeByEventSession($id))) {
-        $response['error'] = "Underprivileged API Key";
-        sendResponse($response, 401);
+        throw new ApiKeyNotPrivilegedException();
     }
 
     if (empty($_FILES)) {
-        $response['error'] = "No File to Upload";
-        sendResponse($response, 400);
+        throw new NoFilesProvidedException();
     }
 
     $status = array('files' => [], 'errorCount' => 0);
 
     $i = 0;
     foreach ($_FILES as $file) {
-        $status['files'][ $i ]['trace'] = $file;
+        $status['data']['files'][ $i ]['trace'] = $file;
 
         if ($file['error'] > 0) {
-            $status['files'][ $i ]['error'] = $file['error'];
-            $status['errorCount']++;
+            $status['data']['files'][ $i ]['error'] = $file['error'];
+            $status['error']['count']++;
         } else {
             $destination = getcwd() . '/up/' . $id . '_' . $file['name'];
             if (!move_uploaded_file($file['tmp_name'], $destination)) {
-                $status['files'][ $i ]['error'] = "Failed to move `{$file['tmp_name']}` to `{$destination}`";
-                $status['errorCount']++;
+                $status['data']['files'][ $i ]['error'] = "Failed to move `{$file['tmp_name']}` to `{$destination}`";
+                $status['error']['count']++;
             } else {
                 //chmod($destination, 0644);
-                $status['files'][ $i ]['path'] = $destination;
+                $status['data']['files'][ $i ]['path'] = $destination;
             }
         }
         $i++;
     }
 
-    if ($status['errorCount'] == 0) {
+    if ($status['error']['count'] == 0) {
         // Everything Worked
-        $httpCode = 200;
-    } elseif ($status['errorCount'] == count($status['files'])) {
+        $status['status']['code'] = 200;
+    } elseif ($status['error']['count'] == count($status['data']['files'])) {
         // Everything failed.
-        $httpCode = 500;
+        $status['status']['code'] = 500;
     } else {
         // Mixed Results
-        $httpCode = 207;
+        $status['status']['code'] = 207;
     }
 
-    if (getPermission("RENEW", getScopeByEventSession($id))) {
-        global $mysqli;
-        global $SQL_PREFIX;
+    try {
+        if (getPermission("RENEW", getScopeByEventSession($id))) {
+            global $mysqli;
+            global $SQL_PREFIX;
 
-        $sqlQuery = <<<EOF
-    UPDATE
-        {$SQL_PREFIX}apikeys
-    SET
-        expiration = DATE_ADD(NOW(), INTERVAL 1 HOUR),
-        last_renewal = NOW()
-    WHERE
-        scope='EVENT'
-    AND scopekey=(SELECT eventkey FROM {$SQL_PREFIX}events WHERE session=?)
-    AND is_expired=0
+            $sqlQuery = <<<EOF
+        UPDATE
+            {$SQL_PREFIX}apikeys
+        SET
+            expiration = DATE_ADD(NOW(), INTERVAL 1 HOUR),
+            last_renewal = NOW()
+        WHERE
+            scope='EVENT'
+        AND scopekey=(SELECT eventkey FROM {$SQL_PREFIX}events WHERE session=?)
+        AND is_expired=0
 EOF;
 
-        if (!$update = $mysqli->prepare($sqlQuery)) {
-            throw new MySQLiStatementNotPreparedException(print_r($mysqli, true) . "\n" . print_r($update, true));
-        }
+            if (!$update = $mysqli->prepare($sqlQuery)) {
+                throw new MySQLiStatementNotPreparedException([$sqlQuery, $mysqli, $update]);
+            }
 
-        $update->bind_param("s", $id);
-        if (!$update->execute()) {
-            throw new MySQLiUpdateQueryFailedException(print_r($mysqli, true) . "\n" . print_r($update, true));
+            $update->bind_param("s", $id);
+            if (!$update->execute()) {
+                throw new MySQLiUpdateQueryFailedException([$sqlQuery, $mysqli, $update]);
+            }
         }
+    } catch (LeagleEyeException $e) {
+        $status['error']['apiKeyRenewalError'] = $e->getResponse();
     }
-    sendResponse($status, $httpCode);
-
+    sendResponse($status);
 }
 
 function api_EVENTS_POST() {
@@ -595,14 +580,6 @@ function sendResponse($response, $exitAfter = true) {
     } else {
         $base = $response;
     }
-
-//    if (!isset($base['status'])) {
-//        $base['status'] = "500";
-//        $base['statusMessage'] = "No Status Provided";
-//    }
-//
-//    $base['statusMessage'] = isset($base['statusMessage']) ? $base['statusMessage'] : "";
-
 
     if (!isset($base['status'])) {
         $base['status'] = ['code' => null, 'message' => ''];
