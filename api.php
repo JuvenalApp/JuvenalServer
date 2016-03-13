@@ -719,7 +719,7 @@ function doMySQLiSelect($sqlQuery, $parameters) {
     call_user_func_array(array($query, 'bind_param'), $boundParameters);
 
     if (!$query->execute()) {
-        throw new MySQLiSelectQueryFailedException([$sqlQuery, $query, $parameters, $boundParameters]);
+        throw new MySQLiSelectQueryFailedException([$sqlQuery, $parameters, $query, $boundParameters]);
     }
 
     $result = $query->get_result();
