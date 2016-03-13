@@ -410,6 +410,7 @@ function api_EVENTS_POST() {
             break;
     }
 
+
     $funcCall = __FUNCTION__;
     if (isset($session) && strlen($session) > 0) {
         $funcCall  = $funcCall . '_ID';
