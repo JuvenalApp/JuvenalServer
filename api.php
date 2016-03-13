@@ -693,7 +693,7 @@ function doMySQLiSelect($sqlQuery, $parameters) {
 
     foreach ($parameters as $parameter) {
         foreach ($parameter as $type => $data) {
-            $parameterTypes += $type;
+            $parameterTypes = $parameterTypes . $type;
             switch ($type) {
                 case 's':
                     $boundParameters[] = (string)$data;
