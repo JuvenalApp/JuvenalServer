@@ -12,7 +12,7 @@ $CONNECTION_STRING = '';
 /** @noinspection PhpIncludeInspection */
 require '../config.inc.php';
 
-$mysqlCredentials = array();
+$mysqlCredentials = [];
 
 foreach (explode(';', $CONNECTION_STRING) as $entry) {
     list($key, $value) = explode('=', $entry);
@@ -661,20 +661,72 @@ function getScopeByEventSession($event) {
     LIMIT 1
 EOF;
 
-    if (!$scopeQuery = $mysqli->prepare($sqlQuery)) {
-        throw new MySQLiStatementNotPreparedException([$sqlQuery, $scopeQuery]);
+    return doMySQLiSelect($sqlQuery, [['s' => $event]]);
+
+//    if (!$scopeQuery = $mysqli->prepare($sqlQuery)) {
+//        throw new MySQLiStatementNotPreparedException([$sqlQuery, $scopeQuery]);
+//    }
+//
+//    $scopeQuery->bind_param("s", $event);
+//    if (!$scopeQuery->execute()) {
+//        throw new MySQLiSelectQueryFailedException([$sqlQuery, $scopeQuery]);
+//    }
+//
+//    $result = $scopeQuery->get_result();
+//
+//    if ($result->num_rows < 1) {
+//        throw new MySQLiNothingSelectedException([$sqlQuery, $scopeQuery, $result]);
+//    }
+//
+//    return $result->fetch_array(MYSQLI_ASSOC);
+}
+
+function doMySQLiSelect($sqlQuery, $parameters) {
+    global $mysqli;
+
+    if (!$query = $mysqli->prepare($sqlQuery)) {
+        throw new MySQLiStatementNotPreparedException([$sqlQuery, $query]);
     }
 
-    $scopeQuery->bind_param("s", $event);
-    if (!$scopeQuery->execute()) {
-        throw new MySQLiSelectQueryFailedException([$sqlQuery, $scopeQuery]);
+    $boundParameters = [''];
+
+    foreach ($parameters as $type => $data) {
+        $boundParameters[0] += $type;
+        switch ($type) {
+            case 's':
+                $boundParameters[] = (string)$data;
+                break;
+            case 'i':
+                $boundParameters[] = (int)$data;
+                break;
+            case 'd':
+                $boundParameters[] = (double)$data;
+                break;
+            case 'b':
+                $boundParameters[] = $data;
+                break;
+            default:
+                throw new WhatTheHeckIsThisException([$type]);
+                break;
+        }
     }
 
-    $result = $scopeQuery->get_result();
+    call_user_func_array(array($query, 'bind_param'), $boundParameters);
+
+    if (!$query->execute()) {
+        throw new MySQLiSelectQueryFailedException([$sqlQuery, $query]);
+    }
+
+    $result = $query->get_result();
 
     if ($result->num_rows < 1) {
-        throw new MySQLiNothingSelectedException([$sqlQuery, $scopeQuery, $result]);
+        throw new MySQLiNothingSelectedException([$sqlQuery, $query, $result]);
     }
 
-    return $result->fetch_array(MYSQLI_ASSOC);
+    $rows = [];
+    while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+        $rows[] = $row;
+    }
+
+    return $rows;
 }
