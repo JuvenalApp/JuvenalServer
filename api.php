@@ -435,14 +435,7 @@ function api_EVENTS_POST() {
     } else {
         try {
             if (!$jsonRequest = json_decode($_POST['request'], true)) {
-                $response = [
-                    'status' => 400,
-                    'error'  => "Malformed JSON",
-                    'trace'  => [
-                        $jsonRequest
-                    ]
-                ];
-                throw new InvalidJsonException($response);
+                throw new InvalidJsonException([$jsonRequest]);
             }
 
             $requiredFields = [
@@ -470,11 +463,7 @@ function api_EVENTS_POST() {
 
             foreach ($requiredFields as $key => $parameters) {
                 if (!isset($jsonRequest[ $key ])) {
-                    $response = [
-                        'status' => 400,
-                        'error'  => "Required parameter `{$key}` is missing.",
-                    ];
-                    throw new BadRequestException($response);
+                    throw new BadRequestException([ "Required parameter `{$key}` is missing." ]);
                 }
 
                 $value   = $jsonRequest[ $key ];
@@ -482,7 +471,7 @@ function api_EVENTS_POST() {
                 $options = isset($parameters['options']) ? $parameters['options'] : [];
 
                 if (!filter_var($value, $filter, $options)) {
-                    throw new BadRequestException("Parameter `{$key}`:`{$value}` is not valid.");
+                    throw new BadRequestException( ["Parameter `{$key}`:`{$value}` is not valid." ]);
                 }
             }
 
