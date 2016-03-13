@@ -590,28 +590,30 @@ function sendResponse($response, $exitAfter = true) {
         $base['status'] = ['code' => null, 'message' => ''];
     }
 
-    if ($base['status']['message'] == '') {
-        switch ($base['status']['code']) {
+    $status = &$base['status'];
+
+    if ($status['message'] == '') {
+        switch ($status['code']) {
             case 200:
-                $base['status']['message'] = "OK";
+                $status['message'] = "OK";
                 break;
             case 201:
-                $base['status']['message'] = "Created";
+                $status['message'] = "Created";
                 break;
             case 400:
-                $base['status']['message'] = "Bad Request";
+                $status['message'] = "Bad Request";
                 break;
             case 500:
-                $base['status']['message'] = "Internal Server Error";
+                $status['message'] = "Internal Server Error";
                 break;
             case null:
-                $base['status']['code']    = 500;
-                $base['status']['message'] = "No Status Provided";
+                $status['code']    = 500;
+                $status['message'] = "No Status Provided";
                 break;
         }
     }
 
-    Header("HTTP/1.1 {$base['status']['code']} {$base['status']['message']}");
+    Header("HTTP/1.1 {$status['code']} {$status['message']}");
     Header("Content-type: application/json");
     print json_encode($base);
     if ($exitAfter) {
@@ -660,24 +662,8 @@ function getScopeByEventSession($event) {
     LIMIT 1
 EOF;
 
+    // By virtue of LIMIT 1 this can only ever have a single row, so send back the zeroth element.
     return doMySQLiSelect($sqlQuery, [['s' => $event]])[0];
-
-//    if (!$scopeQuery = $mysqli->prepare($sqlQuery)) {
-//        throw new MySQLiStatementNotPreparedException([$sqlQuery, $scopeQuery]);
-//    }
-//
-//    $scopeQuery->bind_param("s", $event);
-//    if (!$scopeQuery->execute()) {
-//        throw new MySQLiSelectQueryFailedException([$sqlQuery, $scopeQuery]);
-//    }
-//
-//    $result = $scopeQuery->get_result();
-//
-//    if ($result->num_rows < 1) {
-//        throw new MySQLiNothingSelectedException([$sqlQuery, $scopeQuery, $result]);
-//    }
-//
-//    return $result->fetch_array(MYSQLI_ASSOC);
 }
 
 function doMySQLiSelect($sqlQuery, $parameters) {
@@ -687,8 +673,8 @@ function doMySQLiSelect($sqlQuery, $parameters) {
         throw new MySQLiStatementNotPreparedException([$sqlQuery, $query]);
     }
 
-    $bind = [];
-    $parameterTypes  = '';
+    $bind           = [];
+    $parameterTypes = '';
 
     foreach ($parameters as $parameter) {
         foreach ($parameter as $type => $data) {
@@ -714,7 +700,7 @@ function doMySQLiSelect($sqlQuery, $parameters) {
     }
 
     foreach ($bind as $parameter) {
-        $boundParameters[] =  & $parameter;
+        $boundParameters[] =  &$parameter;
     }
     array_unshift($boundParameters, $parameterTypes);
 
