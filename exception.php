@@ -22,7 +22,7 @@ class LeagleEyeException extends Exception
     }
 }
 
-class LeagleEyeMySQLiException extends LeagleEyeException {
+class LeagleEyeGeneralServerErrorException extends LeagleEyeException {
     public function __construct($message='', $trace = [], $previous = null) {
         $response = [
             'status' => [
@@ -33,65 +33,91 @@ class LeagleEyeMySQLiException extends LeagleEyeException {
                 'trace' => $trace
             ]
         ];
+        parent::__construct($response, $previous);
     }
 }
 
-class MySQLiNotConnectedException extends LeagleEyeMySQLiException {
+class MySQLiNotConnectedException extends LeagleEyeGeneralServerErrorException {
     function __construct(array $trace, $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
     }
 }
 
-class MySQLiStatementNotPreparedException extends LeagleEyeMySQLiException {
+class MySQLiStatementNotPreparedException extends LeagleEyeGeneralServerErrorException {
     function __construct(array $trace, $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
     }
 }
 
-class MySQLiSelectQueryFailedException extends LeagleEyeMySQLiException {
+class MySQLiSelectQueryFailedException extends LeagleEyeGeneralServerErrorException {
     function __construct(array $trace, $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
     }
 }
 
-class MySQLiInsertQueryFailedException extends LeagleEyeMySQLiException {
+class MySQLiInsertQueryFailedException extends LeagleEyeGeneralServerErrorException {
     function __construct(array $trace, $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
     }
 }
 
-class MySQLiUpdateQueryFailedException extends LeagleEyeMySQLiException {
+class MySQLiUpdateQueryFailedException extends LeagleEyeGeneralServerErrorException {
     function __construct(array $trace, $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
     }
 }
 
-class MySQLiDeleteQueryFailedException extends LeagleEyeMySQLiException {
+class MySQLiDeleteQueryFailedException extends LeagleEyeGeneralServerErrorException {
     function __construct(array $trace, $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
     }
 }
 
-class MySQLiRowNotInsertedException extends LeagleEyeMySQLiException {
+class MySQLiRowNotInsertedException extends LeagleEyeGeneralServerErrorException {
     function __construct(array $trace, $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
     }
 }
 
-class MySQLiNothingSelectedException extends LeagleEyeMySQLiException {
+class MySQLiNothingSelectedException extends LeagleEyeGeneralServerErrorException {
     function __construct(array $trace, $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
     }
 }
 
+class LeagleEyeGeneralBadRequestException extends LeagleEyeException {
+    public function __construct($message='', $trace = [], $previous = null) {
+        $response = [
+            'status' => [
+                'code' => 400
+            ],
+            'error' => [
+                'message' => $message,
+                'trace' => $trace
+            ]
+        ];
+        parent::__construct($response, $previous);
+    }
+}
 
-class BadRequestException extends LeagleEyeException { }
-class WhatTheHeckIsThisException extends LeagleEyeException { }
+class BadRequestException extends LeagleEyeGeneralBadRequestException {
+    function __construct(array $trace = [], $previous = null) {
+        parent::__construct(__CLASS__, $trace, $previous);
+    }
+}
 
-class InvalidJsonException extends LeagleEyeException { }
-
-class UnsanitizedInputException extends LeagleEyeException {}
+class InvalidJsonException extends LeagleEyeGeneralBadRequestException {
+    function __construct(array $trace = [], $previous = null) {
+        parent::__construct(__CLASS__, $trace, $previous);
+    }
+}
+class UnsanitizedInputException extends LeagleEyeGeneralBadRequestException {
+    function __construct(array $trace = [], $previous = null) {
+        parent::__construct(__CLASS__, $trace, $previous);
+    }
+}
 
 class ApiKeyNotPrivilegedException extends LeagleEyeException {}
+class WhatTheHeckIsThisException extends LeagleEyeException { }
 
 ?>

@@ -481,15 +481,7 @@ function api_EVENTS_POST() {
                 $options = isset($parameters['options']) ? $parameters['options'] : [];
 
                 if (!filter_var($value, $filter, $options)) {
-                    $response = [
-                        'status' => [
-                            'code' => 400
-                        ],
-                        'error'  => [
-                            'message' => "Parameter `{$key}`:`{$value}` is not valid."
-                        ]
-                    ];
-                    throw new BadRequestException($response);
+                    throw new BadRequestException("Parameter `{$key}`:`{$value}` is not valid.");
                 }
             }
 
