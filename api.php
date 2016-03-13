@@ -688,7 +688,7 @@ function doMySQLiSelect($sqlQuery, $parameters) {
         throw new MySQLiStatementNotPreparedException([$sqlQuery, $query]);
     }
 
-    $boundParameters = [];
+    $bind = [];
     $parameterTypes  = '';
 
     foreach ($parameters as $parameter) {
@@ -696,16 +696,16 @@ function doMySQLiSelect($sqlQuery, $parameters) {
             $parameterTypes = $parameterTypes . $type;
             switch ($type) {
                 case 's':
-                    $boundParameters[] = (string)$data;
+                    $bind[] = (string)$data;
                     break;
                 case 'i':
-                    $boundParameters[] = (int)$data;
+                    $bind[] = (int)$data;
                     break;
                 case 'd':
-                    $boundParameters[] = (double)$data;
+                    $bind[] = (double)$data;
                     break;
                 case 'b':
-                    $boundParameters[] = $data;
+                    $bind[] = $data;
                     break;
                 default:
                     throw new WhatTheHeckIsThisException([$type]);
@@ -714,6 +714,9 @@ function doMySQLiSelect($sqlQuery, $parameters) {
         }
     }
 
+    foreach ($bind as $parameter) {
+        $boundParameters[] =  & $parameter;
+    }
     array_unshift($boundParameters, $parameterTypes);
 
     call_user_func_array(array($query, 'bind_param'), $boundParameters);
