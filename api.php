@@ -714,7 +714,7 @@ function doMySQLiSelect($sqlQuery, $parameters) {
         }
     }
 
-    array_unshift($boundParameters,$parameterTypes)
+    array_unshift($boundParameters,$parameterTypes);
 
     call_user_func_array(array($query, 'bind_param'), $boundParameters);
 
