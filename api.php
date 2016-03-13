@@ -94,10 +94,13 @@ if (isset($apiKey) && strlen($apiKey) == 40) {
     LIMIT 1
 EOF;
 
+    $permissions = null;
     try {
         $permissions = doMySQLiSelect($sqlQuery, [['s' => $apiKey]])[0];
     } catch (MySQLiNothingSelectedException $e) {
         throw new ApiKeyNotPrivilegedException([$apiKey], $e);
+    } catch (LeagleEyeException $e) {
+        sendResponse($e);
     }
 
 //    if (!$permissionQuery = $mysqli->prepare($sqlQuery)) {
@@ -596,7 +599,7 @@ function sendResponse($response, $exitAfter = true) {
         $base['status'] = ['code' => null, 'message' => ''];
     }
 
-    $status = &$base['status'];
+    //$status = &$base['status'];
 
     if ($base['status']['message'] == '') {
         switch ($base['status']['code']) {
