@@ -642,7 +642,6 @@ function getPermission($action, $compare = array()) {
 }
 
 function getScopeByEventSession($event) {
-    global $mysqli;
     global $SQL_PREFIX;
 
     $sqlQuery = <<<EOF
@@ -661,7 +660,7 @@ function getScopeByEventSession($event) {
     LIMIT 1
 EOF;
 
-    return doMySQLiSelect($sqlQuery, [['s' => $event]]);
+    return doMySQLiSelect($sqlQuery, [['s' => $event]])[0];
 
 //    if (!$scopeQuery = $mysqli->prepare($sqlQuery)) {
 //        throw new MySQLiStatementNotPreparedException([$sqlQuery, $scopeQuery]);
@@ -718,8 +717,6 @@ function doMySQLiSelect($sqlQuery, $parameters) {
         $boundParameters[] =  & $parameter;
     }
     array_unshift($boundParameters, $parameterTypes);
-
-    print_r($boundParameters);
 
     call_user_func_array(array($query, 'bind_param'), $boundParameters);
 
