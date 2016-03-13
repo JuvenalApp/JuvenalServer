@@ -689,7 +689,7 @@ function doMySQLiSelect($sqlQuery, $parameters) {
     }
 
     $boundParameters = [];
-    $parameterTypes = '';
+    $parameterTypes  = '';
 
     foreach ($parameters as $parameter) {
         foreach ($parameter as $type => $data) {
@@ -714,12 +714,13 @@ function doMySQLiSelect($sqlQuery, $parameters) {
         }
     }
 
-    array_unshift($boundParameters,$parameterTypes);
+    array_unshift($boundParameters, $parameterTypes);
 
     call_user_func_array(array($query, 'bind_param'), $boundParameters);
 
     if (!$query->execute()) {
-        throw new MySQLiSelectQueryFailedException([$sqlQuery, $parameters, $query, $boundParameters]);
+        throw new MySQLiSelectQueryFailedException(['sqlQuery' => $sqlQuery, 'parameters' => $parameters,
+                                                    'query'    => $query, 'boundParameters' => $boundParameters]);
     }
 
     $result = $query->get_result();
