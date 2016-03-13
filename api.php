@@ -691,7 +691,7 @@ function doMySQLiSelect($sqlQuery, $parameters) {
     $boundParameters = [''];
 
     foreach ($parameters as $type => $data) {
-        $boundParameters[0] += $type;
+        $boundParameters[0] = $boundParameters[0] . $type;
         switch ($type) {
             case 's':
                 $boundParameters[] = (string)$data;
@@ -714,7 +714,7 @@ function doMySQLiSelect($sqlQuery, $parameters) {
     call_user_func_array(array($query, 'bind_param'), $boundParameters);
 
     if (!$query->execute()) {
-        throw new MySQLiSelectQueryFailedException([$sqlQuery, $query, $boundParameters]);
+        throw new MySQLiSelectQueryFailedException([$sqlQuery, $query, $parameters, $boundParameters]);
     }
 
     $result = $query->get_result();
