@@ -327,7 +327,7 @@ function api_EVENTS_POST_ID_ATTACHMENTS($id) {
             $status['data']['files'][ $i ]['error'] = $file['error'];
             $status['error']['count']++;
         } else {
-            $destination = getcwd() . '/up/' . $id . '_' . $file['name'];
+            $destination = getcwd() . DIRECTORY_SEPARATOR . 'up' . DIRECTORY_SEPARATOR . $id . '_' . $file['name'];
             if (!move_uploaded_file($file['tmp_name'], $destination)) {
                 $status['data']['files'][ $i ]['error'] = "Failed to move `{$file['tmp_name']}` to `{$destination}`";
                 $status['error']['count']++;
