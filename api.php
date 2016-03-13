@@ -94,21 +94,27 @@ if (isset($apiKey) && strlen($apiKey) == 40) {
     LIMIT 1
 EOF;
 
-    if (!$permissionQuery = $mysqli->prepare($sqlQuery)) {
-        throw new MySQLiStatementNotPreparedException([$sqlQuery, $permissionQuery]);
+    try {
+        $permissions = doMySQLiSelect($sqlQuery, [['s' => $apiKey]])[0];
+    } catch (MySQLiNothingSelectedException $e) {
+        throw new ApiKeyNotPrivilegedException([$apiKey], $e);
     }
 
-    $permissionQuery->bind_param("s", $apiKey);
-    if (!$permissionQuery->execute()) {
-        throw new MySQLiSelectQueryFailedException([$sqlQuery, $permissionQuery]);
-    }
-
-    $result = $permissionQuery->get_result();
-
-    if ($result->num_rows < 1) {
-        throw new MySQLiNothingSelectedException([$sqlQuery, $permissionQuery, $result]);
-    }
-    $permissions = $result->fetch_array(MYSQLI_ASSOC);
+//    if (!$permissionQuery = $mysqli->prepare($sqlQuery)) {
+//        throw new MySQLiStatementNotPreparedException([$sqlQuery, $permissionQuery]);
+//    }
+//
+//    $permissionQuery->bind_param("s", $apiKey);
+//    if (!$permissionQuery->execute()) {
+//        throw new MySQLiSelectQueryFailedException([$sqlQuery, $permissionQuery]);
+//    }
+//
+//    $result = $permissionQuery->get_result();
+//
+//    if ($result->num_rows < 1) {
+//        throw new MySQLiNothingSelectedException([$sqlQuery, $permissionQuery, $result]);
+//    }
+//    $permissions = $result->fetch_array(MYSQLI_ASSOC);
 
     if ($permissions['is_expired']) {
         $scope = array();
