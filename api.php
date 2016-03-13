@@ -312,7 +312,12 @@ function api_EVENTS_POST_ID_ATTACHMENTS($id) {
         throw new NoFilesProvidedException();
     }
 
-    $status = array('files' => [], 'errorCount' => 0);
+    $status = [
+        'data'  => [],
+        'error' => [
+            'count' => 0
+        ]
+    ];
 
     $i = 0;
     foreach ($_FILES as $file) {
