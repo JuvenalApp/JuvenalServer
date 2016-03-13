@@ -592,28 +592,28 @@ function sendResponse($response, $exitAfter = true) {
 
     $status = &$base['status'];
 
-    if ($status['message'] == '') {
-        switch ($status['code']) {
+    if ($base['status']['message'] == '') {
+        switch ($base['status']['code']) {
             case 200:
-                $status['message'] = "OK";
+                $base['status']['message'] = "OK";
                 break;
             case 201:
-                $status['message'] = "Created";
+                $base['status']['message'] = "Created";
                 break;
             case 400:
-                $status['message'] = "Bad Request";
+                $base['status']['message'] = "Bad Request";
                 break;
             case 500:
-                $status['message'] = "Internal Server Error";
+                $base['status']['message'] = "Internal Server Error";
                 break;
             case null:
-                $status['code']    = 500;
-                $status['message'] = "No Status Provided";
+                $base['status']['code']    = 500;
+                $base['status']['message'] = "No Status Provided";
                 break;
         }
     }
 
-    Header("HTTP/1.1 {$status['code']} {$status['message']}");
+    Header("HTTP/1.1 {$base['status']['code']} {$base['status']['message']}");
     Header("Content-type: application/json");
     print json_encode($base);
     if ($exitAfter) {
