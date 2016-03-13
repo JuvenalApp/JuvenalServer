@@ -463,7 +463,7 @@ function api_EVENTS_POST() {
 
             foreach ($requiredFields as $key => $parameters) {
                 if (!isset($jsonRequest[ $key ])) {
-                    throw new BadRequestException([ "Required parameter `{$key}` is missing." ]);
+                    throw new BadRequestException(["Required parameter `{$key}` is missing."]);
                 }
 
                 $value   = $jsonRequest[ $key ];
@@ -471,7 +471,7 @@ function api_EVENTS_POST() {
                 $options = isset($parameters['options']) ? $parameters['options'] : [];
 
                 if (!filter_var($value, $filter, $options)) {
-                    throw new BadRequestException( ["Parameter `{$key}`:`{$value}` is not valid." ]);
+                    throw new BadRequestException(["Parameter `{$key}`:`{$value}` is not valid."]);
                 }
             }
 
@@ -490,7 +490,7 @@ EOF;
 
             /** @var mysqli_stmt $eventQuery */
             if (!$eventQuery = $mysqli->prepare($sqlQuery)) {
-                throw new MySQLiStatementNotPreparedException(print_r($mysqli, true));
+                throw new MySQLiStatementNotPreparedException([$sqlQuery, $mysqli]);
             }
 
             do {
@@ -508,10 +508,10 @@ EOF;
 
             switch ($eventQuery->affected_rows) {
                 case -1:
-                    throw new MySQLiInsertQueryFailedException(print_r($eventQuery, true));
+                    throw new MySQLiInsertQueryFailedException([$sqlQuery, $eventQuery]);
                     break;
                 case 0:
-                    throw new MySQLiRowNotInsertedException(print_r($eventQuery, true));
+                    throw new MySQLiRowNotInsertedException([$sqlQuery, $eventQuery]);
                     break;
             }
 
@@ -538,7 +538,7 @@ EOF;
 
             /** @var mysqli_stmt $apiKeyQuery */
             if (!$apiKeyQuery = $mysqli->prepare($sqlQuery)) {
-                throw new MySQLiStatementNotPreparedException([$mysqli]);
+                throw new MySQLiStatementNotPreparedException([$sqlQuery, $mysqli]);
             }
 
             do {
@@ -554,10 +554,10 @@ EOF;
 
             switch ($apiKeyQuery->affected_rows) {
                 case -1:
-                    throw new MySQLiInsertQueryFailedException(print_r($apiKeyQuery, true));
+                    throw new MySQLiInsertQueryFailedException([$sqlQuery, $apiKeyQuery]);
                     break;
                 case 0:
-                    throw new MySQLiRowNotInsertedException(print_r($apiKeyQuery, true));
+                    throw new MySQLiRowNotInsertedException([$sqlQuery, $apiKeyQuery]);
                     break;
             }
             $eventQuery->close();
@@ -569,7 +569,9 @@ EOF;
                     'dial'    => "+1 407 934 7639",
                     'apiKey'  => $apiKey
                 ],
-                'status' => 201
+                'status' => [
+                    'code' => 201
+                ]
             ];
             sendResponse($response);
         } catch (Exception $e) {
