@@ -392,6 +392,7 @@ EOF;
 function api_EVENTS_POST() {
     global $mysqli;
     global $path;
+    global $SQL_PREFIX;
 
     switch (count($path)) {
         /** @noinspection PhpMissingBreakStatementInspection */
@@ -474,7 +475,7 @@ function api_EVENTS_POST() {
 
             $sqlQuery = <<<EOF
     INSERT INTO
-        dev__events
+        {$SQL_PREFIX}events
         (
             session,
             segmentkey,
@@ -514,7 +515,7 @@ EOF;
 
             $sqlQuery = <<<EOF
 INSERT INTO
-    dev__apikeys
+    {$SQL_PREFIX}apikeys
 (
     expiration,
     scope,
