@@ -537,7 +537,7 @@ EOF;
             $apiKey = null;
             $scopeKey = (int)$eventQuery->insert_id;
             $apiKeyAdded = false;
-            $attempts = 100;
+            $attempts = 1;
             $i = 0;
 
             do {
