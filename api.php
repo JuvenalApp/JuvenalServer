@@ -468,16 +468,18 @@ function api_EVENTS_POST()
 
 
             $sqlQuery = <<<EOF
-    INSERT INTO
-        tbl__events
-        (
-            session,
-            segmentkey,
-            phone_number,
-            email_address,
-            latitude,
-            longitude
-        ) VALUES (?, ?, ?, ?, ?, ?)
+            
+                INSERT INTO
+                    tbl__events
+                    (
+                        session,
+                        segmentkey,
+                        phone_number,
+                        email_address,
+                        latitude,
+                        longitude
+                    ) VALUES (?, ?, ?, ?, ?, ?)
+        
 EOF;
 
             $sessionId = null;
@@ -516,24 +518,26 @@ EOF;
 
 
             $sqlQuery = <<<EOF
-INSERT INTO
-    tbl__apikeys
-(
-    expiration,
-    scope,
-    ALLOW_RENEW,
-    ALLOW_UPLOAD,
-    apikey,
-    scopekey
-)
-VALUES
-(
-    DATE_ADD(NOW(), INTERVAL 1 HOUR),
-    'EVENT',
-    1,
-    1,
-    ?, ?
-)
+            
+                INSERT INTO
+                    tbl__apikeys
+                (
+                    expiration,
+                    scope,
+                    ALLOW_RENEW,
+                    ALLOW_UPLOAD,
+                    apikey,
+                    scopekey
+                )
+                VALUES
+                (
+                    DATE_ADD(NOW(), INTERVAL 1 HOUR),
+                    'EVENT',
+                    1,
+                    1,
+                    ?, ?
+                )
+                
 EOF;
 
             $apiKey = null;
@@ -556,7 +560,7 @@ EOF;
                 } catch (MySQLiInsertQueryFailedException $e) {
                     $lastError = print_r($e, true);
                 }
-                
+
                 $i++;
 
             } while (!$apiKeyAdded AND $i <= $attempts);
@@ -565,30 +569,6 @@ EOF;
                 throw new ApiKeyNotAddedException([$lastError]);
             }
 
-//            /** @var mysqli_stmt $apiKeyQuery */
-//            if (!$apiKeyQuery = $mysqli->prepare($sqlQuery)) {
-//                throw new MySQLiStatementNotPreparedException([$sqlQuery, $mysqli]);
-//            }
-//
-//            do {
-//                $apiKey = generateApiKey($sessionId);
-//                $scopeKey = (int)$eventQuery->insert_id;
-//
-//                $apiKeyQuery->bind_param("si",
-//                    $apiKey,
-//                    $scopeKey
-//                );
-//                $apiKeyQuery->execute();
-//            } while ($apiKeyQuery->errno == 1062);
-//
-//            switch ($apiKeyQuery->affected_rows) {
-//                case -1:
-//                    throw new MySQLiInsertQueryFailedException([$sqlQuery, $apiKeyQuery]);
-//                    break;
-//                case 0:
-//                    throw new MySQLiRowNotInsertedException([$sqlQuery, $apiKeyQuery]);
-//                    break;
-//            }
             $eventQuery->close();
             $apiKeyQuery->close();
 
