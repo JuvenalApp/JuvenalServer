@@ -504,6 +504,7 @@ EOF;
                     $eventAdded = true;
                 } catch (MySQLiInsertQueryFailedException $e) {
                     $lastError = print_r($e, true);
+                } finally {
                     $i++;
                 }
             } while (!$eventAdded AND $i <= $attempts);
@@ -550,14 +551,16 @@ EOF;
                         ]
                     );
 
-                    $eventAdded = true;
+                    $apiKeyAdded = true;
                 } catch (MySQLiInsertQueryFailedException $e) {
+                    $lastError = print_r($e, true);
+                } finally {
                     $i++;
                 }
             } while (!$apiKeyAdded AND $i <= $attempts);
 
-            if (!$eventAdded) {
-                throw new ApiKeyNotAddedException([$eventQuery]);
+            if (!$apiKeyAdded) {
+                throw new ApiKeyNotAddedException([$lastError]);
             }
 
 //            /** @var mysqli_stmt $apiKeyQuery */
