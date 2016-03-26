@@ -131,11 +131,19 @@ class MySQLiDriver
 
         array_unshift($boundParameters, $parameterTypes);
 
+        error_log(print_r($query,true));
         call_user_func_array(array($query, 'bind_param'), $boundParameters);
+        error_log(print_r($query,true));
 
         $query->execute();
-        $this->mysqli->commit();
 
+        error_log(print_r($query,true));
+
+
+        error_log(print_r($this->mysqli,true));
+        $this->mysqli->commit();
+        error_log(print_r($this->mysqli,true));
+        
         $errorData = ['sqlQuery' => $sqlQuery, 'parameters' => $parameters, 'query' => $query, 'boundParameters' => $boundParameters, 'mysqli' => $this->mysqli];
 
         if ($query->errno OR $query->affected_rows < 0) {
