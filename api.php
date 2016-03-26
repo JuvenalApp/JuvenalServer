@@ -509,7 +509,7 @@ EOF;
             } while (!$eventAdded AND $i <= $attempts);
             
             if (!$eventAdded) {
-                throw new EventNotAddedException([$lastError]);
+                throw new EventNotAddedException([$attempts , $lastError]);
             }
 
 
