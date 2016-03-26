@@ -82,6 +82,18 @@ class Http500Exception extends LeagleEyeException {
     }
 }
 
+class EventNotAddedException extends Http500Exception {
+    function __construct(array $trace, $previous = null) {
+        parent::__construct(__CLASS__, $trace, $previous);
+    }
+}
+
+class ApiKeyNotAddedException extends Http500Exception {
+    function __construct(array $trace, $previous = null) {
+        parent::__construct(__CLASS__, $trace, $previous);
+    }
+}
+
 class MySQLiNotConnectedException extends Http500Exception {
     function __construct(array $trace, $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
