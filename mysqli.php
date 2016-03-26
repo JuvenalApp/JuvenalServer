@@ -135,8 +135,8 @@ class MySQLiDriver
 
         $query->execute();
 
-        error_log('$query: ' . print_r($query,true));
-        error_log('$this->mysqli: ' . print_r($this->mysqli,true));
+        //error_log('$query: ' . print_r($query,true));
+        //error_log('$this->mysqli: ' . print_r($this->mysqli,true));
 
         $errorData = ['sqlQuery' => $sqlQuery, 'parameters' => $parameters, 'query' => $query, 'boundParameters' => $boundParameters, 'mysqli' => $this->mysqli];
 
