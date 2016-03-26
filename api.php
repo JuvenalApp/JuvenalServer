@@ -503,7 +503,7 @@ EOF;
 
                     $eventAdded = true;
                 } catch (MySQLiInsertQueryFailedException $e) {
-                    $lastError = $e;
+                    print_r($e);
                     $i++;
                 }
             } while (!$eventAdded AND $i <= $attempts);
