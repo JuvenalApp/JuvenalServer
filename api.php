@@ -497,7 +497,7 @@ EOF;
                             ['s' => $jsonRequest['phoneNumber']],
                             ['s' => $jsonRequest['emailAddress']],
                             ['d' => $jsonRequest['latitude']],
-                            ['d' => $jsonRequest['longitude']],
+                            ['d' => $jsonRequest['longitude']]
                         ]
                     );
 
@@ -507,9 +507,9 @@ EOF;
                     $i++;
                 }
             } while (!$eventAdded AND $i <= $attempts);
-            
+
             if (!$eventAdded) {
-                throw new EventNotAddedException([$attempts , $lastError]);
+                throw new EventNotAddedException([$attempts, $lastError]);
             }
 
 
