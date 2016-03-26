@@ -124,17 +124,19 @@ class MySQLiDriver
             }
         }
 
-        for ($i=0;$i<count($bind);$i++) {
+        for ($i = 0; $i < count($bind); $i++) {
             $boundParameters[] =  &$bind[$i];
         }
 
         //foreach ($bind as $parameter) {
         //    $boundParameters[] =  &$parameter;
         //}
-        
+
         array_unshift($boundParameters, $parameterTypes);
 
         call_user_func_array(array($query, 'bind_param'), $boundParameters);
+
+        $query->execute();
 
         $errorData = ['sqlQuery' => $sqlQuery, 'parameters' => $parameters, 'query' => $query, 'boundParameters' => $boundParameters, 'mysqli' => $this->mysqli];
 
