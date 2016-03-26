@@ -3,6 +3,7 @@
 error_reporting(E_ALL);
 
 require 'exception.php';
+require 'mysqli.php';
 
 // Set these to -something- in case the include fails
 $API_PATH = '';
