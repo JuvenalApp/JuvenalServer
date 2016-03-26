@@ -485,6 +485,7 @@ EOF;
             $eventAdded = false;
             $attempts = 100;
             $i = 0;
+            $lastError = null;
 
             do {
                 try {
@@ -502,12 +503,13 @@ EOF;
 
                     $eventAdded = true;
                 } catch (MySQLiInsertQueryFailedException $e) {
+                    $lastError = $e;
                     $i++;
                 }
             } while (!$eventAdded AND $i <= $attempts);
             
             if (!$eventAdded) {
-                throw new EventNotAddedException([$eventQuery]);
+                throw new EventNotAddedException([$lastError]);
             }
 
 
