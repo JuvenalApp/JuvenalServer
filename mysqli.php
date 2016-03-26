@@ -124,19 +124,17 @@ class MySQLiDriver
             }
         }
 
+        // Can't use foreach because the memory address for the AS variable changes and so all parameters get the same value.
         for ($i = 0; $i < count($bind); $i++) {
             $boundParameters[] =  &$bind[$i];
         }
-
-        //foreach ($bind as $parameter) {
-        //    $boundParameters[] =  &$parameter;
-        //}
 
         array_unshift($boundParameters, $parameterTypes);
 
         call_user_func_array(array($query, 'bind_param'), $boundParameters);
 
         $query->execute();
+        $this->mysqli->commit();
 
         $errorData = ['sqlQuery' => $sqlQuery, 'parameters' => $parameters, 'query' => $query, 'boundParameters' => $boundParameters, 'mysqli' => $this->mysqli];
 
