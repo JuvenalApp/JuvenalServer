@@ -483,7 +483,7 @@ EOF;
             $sessionId = null;
             $eventQuery = null;
             $eventAdded = false;
-            $attempts = 10;
+            $attempts = 1;
             $i = 0;
             $lastError = null;
 
