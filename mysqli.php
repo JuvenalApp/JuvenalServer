@@ -131,18 +131,14 @@ class MySQLiDriver
 
         call_user_func_array(array($query, 'bind_param'), $boundParameters);
 
-        if ($query->errno) {
-            throw new MySQLiInsertQueryFailedException(['sqlQuery' => $sqlQuery, 'parameters' => $parameters,
-                'query' => $query, 'boundParameters' => $boundParameters, 'mysqli' => $this->mysqli]);
+        $errorData = ['sqlQuery' => $sqlQuery, 'parameters' => $parameters, 'query' => $query, 'boundParameters' => $boundParameters, 'mysqli' => $this->mysqli];
+
+        if ($query->errno OR $query->affected_rows < 0) {
+            throw new MySQLiInsertQueryFailedException($errorData);
         }
 
-        switch ($query->affected_rows) {
-            case -1:
-                throw new MySQLiInsertQueryFailedException([$sqlQuery, $query]);
-                break;
-            case 0:
-                throw new MySQLiRowNotInsertedException([$sqlQuery, $query]);
-                break;
+        if ($query->affected_rows < 1) {
+            throw new MySQLiRowNotInsertedException($errorData);
         }
 
         return $query;
