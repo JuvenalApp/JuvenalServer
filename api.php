@@ -352,29 +352,22 @@ function api_EVENTS_POST_ID_ATTACHMENTS($id)
 EOF;
 
             try {
-                $eventQuery = $mysqli->insert($sqlQuery, [
-                        ['s' => $sessionId],
-                        ['i' => $jsonRequest['segment']],
-                        ['s' => $jsonRequest['phoneNumber']],
-                        ['s' => $jsonRequest['emailAddress']],
-                        ['d' => $jsonRequest['latitude']],
-                        ['d' => $jsonRequest['longitude']]
+                $eventQuery = $mysqli->update($sqlQuery, [
+                        ['s' => $id]
                     ]
                 );
-
-                $eventAdded = true;
             } catch (DatabaseInsertQueryFailedException $e) {
                 $lastError = print_r($e, true);
             }
 
-            if (!$update = $mysqli->prepare($sqlQuery)) {
-                throw new DatabaseStatementNotPreparedException([$sqlQuery, $mysqli, $update]);
-            }
+            //if (!$update = $mysqli->prepare($sqlQuery)) {
+            //    throw new DatabaseStatementNotPreparedException([$sqlQuery, $mysqli, $update]);
+            //}
 
-            $update->bind_param("s", $id);
-            if (!$update->execute()) {
-                throw new DatabaseUpdateQueryFailedException([$sqlQuery, $mysqli, $update]);
-            }
+//            $update->bind_param("s", $id);
+//            if (!$update->execute()) {
+//                throw new DatabaseUpdateQueryFailedException([$sqlQuery, $mysqli, $update]);
+//            }
         }
     } catch (LeagleEyeException $e) {
         $status['error']['apiKeyRenewalError'] = $e->getResponse();
