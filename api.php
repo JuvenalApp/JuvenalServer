@@ -78,7 +78,7 @@ if (isset($apiKey) && strlen($apiKey) == 40) {
         ALLOW_SEARCH,
         ALLOW_APIKEY_CREATE
     FROM
-        {$SQL_PREFIX}apikeys
+        tbl__apikeys
     WHERE
         apikey=(?)
     LIMIT 1
@@ -86,8 +86,8 @@ EOF;
 
     $permissions = null;
     try {
-        $permissions = doMySQLiSelect($sqlQuery, [['s' => $apiKey]])[0];
-    } catch (MySQLiNothingSelectedException $e) {
+        $permissions = $mysqli->select($sqlQuery, [['s' => $apiKey]])[0];
+    } catch (DatabaseNothingSelectedException $e) {
         throw new ApiKeyNotPrivilegedException([$apiKey], $e);
     }
 
@@ -156,30 +156,13 @@ EOF;
         SELECT
             {$field}
         FROM
-            {$SQL_PREFIX}{$table}
+            tbl__{$table}
         WHERE
             {$lookup}=(?)
         LIMIT 1
 EOF;
 
-            if (!$scopeQuery = $mysqli->prepare($sqlQuery)) {
-                throw new MySQLiStatementNotPreparedException([$sqlQuery, $scopeQuery]);
-            }
-
-            /** @var string $parameter */
-            $temp = (int)$parameter;
-            $scopeQuery->bind_param("i", $temp);
-            if (!$scopeQuery->execute()) {
-                throw new MySQLiSelectQueryFailedException([$sqlQuery, $scopeQuery]);
-            }
-
-            $result = $scopeQuery->get_result();
-
-            if ($result->num_rows < 1) {
-                throw new MySQLiNothingSelectedException([$sqlQuery, $scopeQuery, $result]);
-            }
-
-            $scopeResult = $result->fetch_array(MYSQLI_ASSOC);
+            $scopeResult = $mysqli->select($sqlQuery, [["i" => $parameter]])[0];
 
             if (isset($scopeResult['productkey'])) {
                 $scope['product'] = $scopeResult['productkey'];
@@ -293,9 +276,9 @@ function api_EVENTS_PUT_ID($id)
  * @param $id
  * @throws ApiKeyNotPrivilegedException
  * @throws InvalidIdentifierException
- * @throws MySQLiNothingSelectedException
- * @throws MySQLiSelectQueryFailedException
- * @throws MySQLiStatementNotPreparedException
+ * @throws DatabaseNothingSelectedException
+ * @throws DatabaseSelectQueryFailedException
+ * @throws DatabaseStatementNotPreparedException
  * @throws NoFilesProvidedException
  */
 function api_EVENTS_POST_ID_ATTACHMENTS($id)
@@ -353,27 +336,44 @@ function api_EVENTS_POST_ID_ATTACHMENTS($id)
     try {
         if (getPermission("RENEW", getScopeByEventSession($id))) {
             global $mysqli;
-            global $SQL_PREFIX;
 
             $sqlQuery = <<<EOF
-        UPDATE
-            {$SQL_PREFIX}apikeys
-        SET
-            expiration = DATE_ADD(NOW(), INTERVAL 1 HOUR),
-            last_renewal = NOW()
-        WHERE
-            scope='EVENT'
-        AND scopekey=(SELECT eventkey FROM {$SQL_PREFIX}events WHERE session=?)
-        AND is_expired=0
+
+                UPDATE
+                    tbl__apikeys
+                SET
+                    expiration = DATE_ADD(NOW(), INTERVAL 1 HOUR),
+                    last_renewal = NOW()
+                WHERE
+                    scope='EVENT'
+                AND scopekey=(SELECT eventkey FROM tbl__events WHERE session=?)
+                AND is_expired=0
+
 EOF;
 
+            try {
+                $eventQuery = $mysqli->insert($sqlQuery, [
+                        ['s' => $sessionId],
+                        ['i' => $jsonRequest['segment']],
+                        ['s' => $jsonRequest['phoneNumber']],
+                        ['s' => $jsonRequest['emailAddress']],
+                        ['d' => $jsonRequest['latitude']],
+                        ['d' => $jsonRequest['longitude']]
+                    ]
+                );
+
+                $eventAdded = true;
+            } catch (DatabaseInsertQueryFailedException $e) {
+                $lastError = print_r($e, true);
+            }
+
             if (!$update = $mysqli->prepare($sqlQuery)) {
-                throw new MySQLiStatementNotPreparedException([$sqlQuery, $mysqli, $update]);
+                throw new DatabaseStatementNotPreparedException([$sqlQuery, $mysqli, $update]);
             }
 
             $update->bind_param("s", $id);
             if (!$update->execute()) {
-                throw new MySQLiUpdateQueryFailedException([$sqlQuery, $mysqli, $update]);
+                throw new DatabaseUpdateQueryFailedException([$sqlQuery, $mysqli, $update]);
             }
         }
     } catch (LeagleEyeException $e) {
@@ -504,7 +504,7 @@ EOF;
                     );
 
                     $eventAdded = true;
-                } catch (MySQLiInsertQueryFailedException $e) {
+                } catch (DatabaseInsertQueryFailedException $e) {
                     $lastError = print_r($e, true);
                 }
 
@@ -557,7 +557,7 @@ EOF;
                     );
 
                     $apiKeyAdded = true;
-                } catch (MySQLiInsertQueryFailedException $e) {
+                } catch (DatabaseInsertQueryFailedException $e) {
                     $lastError = print_r($e, true);
                 }
 

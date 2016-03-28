@@ -94,49 +94,61 @@ class ApiKeyNotAddedException extends Http500Exception {
     }
 }
 
-class MySQLiNotConnectedException extends Http500Exception {
+class DatabaseNotConnectedException extends Http500Exception {
     function __construct(array $trace, $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
     }
 }
 
-class MySQLiStatementNotPreparedException extends Http500Exception {
+class DatabaseStatementNotPreparedException extends Http500Exception {
     function __construct(array $trace, $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
     }
 }
 
-class MySQLiSelectQueryFailedException extends Http500Exception {
+class DatabaseSelectQueryFailedException extends Http500Exception {
     function __construct(array $trace, $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
     }
 }
 
-class MySQLiInsertQueryFailedException extends Http500Exception {
+class DatabaseInsertQueryFailedException extends Http500Exception {
     function __construct(array $trace, $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
     }
 }
 
-class MySQLiUpdateQueryFailedException extends Http500Exception {
+class DatabaseUpdateQueryFailedException extends Http500Exception {
     function __construct(array $trace, $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
     }
 }
 
-class MySQLiDeleteQueryFailedException extends Http500Exception {
+class DatabaseDeleteQueryFailedException extends Http500Exception {
     function __construct(array $trace, $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
     }
 }
 
-class MySQLiRowNotInsertedException extends Http500Exception {
+class DatabaseRowNotInsertedException extends Http500Exception {
     function __construct(array $trace, $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
     }
 }
 
-class MySQLiNothingSelectedException extends Http500Exception {
+class DatabaseNothingSelectedException extends Http500Exception {
+    function __construct(array $trace, $previous = null) {
+        parent::__construct(__CLASS__, $trace, $previous);
+    }
+}
+
+class DatabaseNothingUpdatedException extends Http500Exception {
+    function __construct(array $trace, $previous = null) {
+        parent::__construct(__CLASS__, $trace, $previous);
+    }
+}
+
+class DatabaseInvalidQueryTypeException extends Http500Exception {
     function __construct(array $trace, $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
     }
