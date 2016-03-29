@@ -148,7 +148,11 @@ class MySQLiDriver
         //error_log('$query: ' . print_r($query,true));
         //error_log('$this->mysqli: ' . print_r($this->mysqli,true));
 
-        $errorData = ['sqlQuery' => $sqlQuery, 'parameters' => $parameters, 'query' => $query, 'boundParameters' => $boundParameters, 'mysqli' => $this->mysqli];
+        $tempQuery = $query;
+        $tempMysqli = $this->mysqli;
+
+        $errorData = ['sqlQuery' => $sqlQuery, 'parameters' => $parameters, 'query' => $tempQuery, 'boundParameters' =>
+            $boundParameters, 'mysqli' => $tempMysqli];
 
         if ($query->errno > 0 OR $query->affected_rows < 0) {
             throw new DatabaseInsertQueryFailedException($errorData);
