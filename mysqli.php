@@ -145,8 +145,8 @@ class MySQLiDriver
 
         $query->execute();
 
-        //error_log('$query: ' . print_r($query,true));
-        //error_log('$this->mysqli: ' . print_r($this->mysqli,true));
+        error_log('$query: ' . print_r($query,true));
+        error_log('$this->mysqli: ' . print_r($this->mysqli,true));
 
         $tempQuery = $query;
         $tempMysqli = $this->mysqli;
