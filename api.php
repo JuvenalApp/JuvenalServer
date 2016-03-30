@@ -315,8 +315,8 @@ function api_EVENTS_GET_dispatch()
 
             // Only include valid columns.
             foreach ($columns as $column) {
-                print $column . '\n';
-                if (key_exists($column, $eventColumns)) {
+                print $column . "\n";
+                if (in_array($column, $eventColumns)) {
                     $columnsToSelect[] = $column;
                 } else {
                     // Intentionally dropping this invalid entry.
@@ -342,7 +342,7 @@ function api_EVENTS_GET_dispatch()
                 }
 
                 // Is it a valid column? Drop it if not.
-                if (key_exists($columnName, $eventColumns)) {
+                if (in_array($columnName, $eventColumns)) {
                     switch ($direction) {
                         case 'ASC':
                         case 'DESC':
