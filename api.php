@@ -402,7 +402,10 @@ EOF;
             'count' => count($rows),
             'rows' => $rows
         ],
-        'status' => ['code' => 200]
+        'status' => [
+            'code' => 200,
+            'message' => 'OK'
+        ]
     ];
     sendResponse($response);
 
