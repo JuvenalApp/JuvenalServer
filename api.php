@@ -355,7 +355,7 @@ function api_EVENTS_GET_dispatch()
     if (count($columnsToSelect) == 0) {
         $columnsToSelect = $eventColumns;
     }
-    $columnsInQuery = join(",\n           ", $columnsToSelect);
+    $columnsInQuery = join(",\n            ", $columnsToSelect);
 
     $orderBy = '';
     if (count($orderByColumns) > 0) {
@@ -372,13 +372,13 @@ function api_EVENTS_GET_dispatch()
         $criteria[] = "segmentkey=" . $scope['segment'];
     }
     if ($scope['event'] != "*") {
-        $criteria[] = "session='" . $scope['event'] . "''";
+        $criteria[] = "session='" . $scope['event'] . "'";
     }
 
     $whereClause = join("\n         AND ", $criteria);
 
     $begin = 0;
-    $end = 0;
+    $end = 10;
 
     $sqlQuery = <<<EOF
             
