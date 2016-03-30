@@ -397,7 +397,12 @@ function api_EVENTS_GET_dispatch()
             {$begin}, {$end}
 EOF;
 
-    $rows = $database->select($sqlQuery);
+    try {
+        $rows = $database->select($sqlQuery);
+    } catch (DatabaseNothingSelectedException $e) {
+        // No rows is OK. Eat exception.
+        $rows = [];
+    }
 
     $response = [
         'status' => [
