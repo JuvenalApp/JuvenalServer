@@ -330,10 +330,13 @@ function api_EVENTS_GET_dispatch()
                 if (stristr($column, " ") > 0) {
                     list($columnName, $direction) = explode(' ', $column);
                 } else {
-                    $columnName = explode(' ', $column);
+                    $columnName = $column;
                     $direction = '';
                 }
 
+                print "columnName: {$columnName}\n";
+                print "direction: {$direction}\n";
+                
                 // Is it a valid column? Drop it if not.
                 if (in_array($columnName, $eventColumns)) {
                     switch ($direction) {
