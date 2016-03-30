@@ -367,6 +367,8 @@ function api_EVENTS_GET_dispatch()
 
     $scope = getCurrentScope();
     $criteria = '';
+
+    // Yes, we're intentionally replacing the criteria with a more specific one if applicable.
     if ($scope['product'] != "*") {
         $criteria = "segmentkey IN (SELECT segmentkey FROM tbl__segments WHERE productkey=" .$scope['product'] . ")";
     }
