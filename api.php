@@ -366,7 +366,9 @@ function api_EVENTS_GET_dispatch()
     }
 
     $scope = getCurrentScope();
-    $whereClause = '';
+
+    // By default, select nothing.
+    $whereClause = 'FALSE';
 
     // Yes, we're intentionally replacing the criteria with a more specific one if applicable.
     if ($scope['product'] != "*") {
@@ -398,13 +400,13 @@ EOF;
     $rows = $database->select($sqlQuery);
 
     $response = [
-        'data' => [
-            'count' => count($rows),
-            'rows' => $rows
-        ],
         'status' => [
             'code' => 200,
             'message' => 'OK'
+        ],
+        'data' => [
+            'count' => count($rows),
+            'rows' => $rows
         ]
     ];
     sendResponse($response);
