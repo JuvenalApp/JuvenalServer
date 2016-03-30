@@ -38,16 +38,20 @@ $method = $_SERVER['REQUEST_METHOD'];
 $pattern = '/^\/' . preg_quote($API_PATH, '/') . '([a-z0-9]{40}|)\/?(\w+$|\w+(?=[\/]))\/?(.+)?/';
 
 if (strpos($_SERVER['REQUEST_URI'], "?") > 0) {
-    list($requestPath, $queryString) = explode('?', strtolower($_SERVER['REQUEST_URI']));
+    list($requestPath, $queryString) = explode('?', $_SERVER['REQUEST_URI']);
 } else {
     $requestPath = $_SERVER['REQUEST_URI'];
     $queryString = '';
 }
 
+$requestPath = strtolower($requestPath);
+
 foreach (explode('&', $queryString) as $entry) {
     list($key, $value) = explode('=', $entry);
     $requestQuery[$key] = $value;
 }
+
+print_r($requestQuery);
 
 /* Depending on server configuration,
    the path may or more not start with /
@@ -302,6 +306,8 @@ function api_EVENTS_GET_dispatch()
     $columnsToSelect = [];
     $orderByColumns = [];
 
+    print_r($requestQuery);
+
     if (count($requestQuery) > 0) {
 
         // Did they provide Query parameters?
@@ -321,7 +327,7 @@ function api_EVENTS_GET_dispatch()
 
         if (key_exists('order', $requestQuery)) {
             // We've been given a specific order.
-            $columns = explode(',', $requestQuery['select']);
+            $columns = explode(',', $requestQuery['order']);
 
             foreach ($columns as $column) {
 
