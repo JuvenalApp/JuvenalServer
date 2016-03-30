@@ -327,9 +327,11 @@ function api_EVENTS_GET_dispatch()
                 }
 
                 // Did they give us a column name only, or a column name and direction?
-                if (stristr($column, '+') > 0) {
+                if (strstr($column, '+') !== FALSE) {
+                    print "column and direction".
                     list($columnName, $direction) = explode('+', $column);
                 } else {
+                    print "column only".
                     $columnName = $column;
                     $direction = '';
                 }
