@@ -397,9 +397,12 @@ EOF;
 
     $rows = $database->select($sqlQuery);
 
-    $response['data'] = [
-        'count' => count($rows),
-        'rows' => $rows
+    $response = [
+        'data' => [
+            'count' => count($rows),
+            'rows' => $rows
+        ],
+        'status' => ['code' => 200]
     ];
     sendResponse($response);
 
