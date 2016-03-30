@@ -320,6 +320,12 @@ function api_EVENTS_GET_dispatch()
 
             // Only include valid columns.
             $columnsToSelect = array_intersect($columns,$eventColumns);
+            print "\ncolumns: ";
+            print_r($columns);
+            print "\neventColumns: ";
+            print_r($eventColumns);
+            print "\ncolumnsToSelect: ";
+            print_r($columnsToSelect);
         }
 
         if (key_exists('order', $requestQuery)) {
