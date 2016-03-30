@@ -401,11 +401,6 @@ function api_EVENTS_GET_dispatch()
             {$begin}, {$end}
 EOF;
 
-    print "Donuts";
-    exit();
-
-    error_log("DONUTS");
-
     try {
         $rows = $database->select($sqlQuery);
     } catch (DatabaseNothingSelectedException $e) {
