@@ -53,8 +53,6 @@ foreach (explode('&', $queryString . '&') as $entry) {
     }
 }
 
-print_r($requestQuery);
-
 /* Depending on server configuration,
    the path may or more not start with /
 */
@@ -308,8 +306,6 @@ function api_EVENTS_GET_dispatch()
     $columnsToSelect = [];
     $orderByColumns = [];
 
-    print_r($requestQuery);
-
     if (count($requestQuery) > 0) {
 
         // Did they provide Query parameters?
@@ -319,6 +315,7 @@ function api_EVENTS_GET_dispatch()
 
             // Only include valid columns.
             foreach ($columns as $column) {
+                print $column . '\n';
                 if (key_exists($column, $eventColumns)) {
                     $columnsToSelect[] = $column;
                 } else {
