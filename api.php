@@ -327,8 +327,8 @@ function api_EVENTS_GET_dispatch()
                 }
 
                 // Did they give us a column name only, or a column name and direction?
-                if (stristr($column, " ") > 0) {
-                    list($columnName, $direction) = explode(' ', $column);
+                if (stristr($column, '+') > 0) {
+                    list($columnName, $direction) = explode('+', $column);
                 } else {
                     $columnName = $column;
                     $direction = '';
@@ -336,7 +336,7 @@ function api_EVENTS_GET_dispatch()
 
                 print "columnName: {$columnName}\n";
                 print "direction: {$direction}\n";
-                
+
                 // Is it a valid column? Drop it if not.
                 if (in_array($columnName, $eventColumns)) {
                     switch ($direction) {
