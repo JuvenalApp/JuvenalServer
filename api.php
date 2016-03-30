@@ -133,7 +133,7 @@ EOF;
                 $scope['event'] = "*";
                 $field = 'productkey';
                 $table = 'segments';
-                $lookup = 'segment';
+                $lookup = 'segmentkey';
                 $parameter = $permissions['scopekey'];
                 break;
             case 'EVENT':
