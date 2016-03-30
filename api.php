@@ -412,11 +412,13 @@ EOF;
         'data' => [
             'count' => count($rows),
             'rows' => $rows
+        ],
+        'trace' => [
+            'sqlQuery' => $sqlQuery,
+            'database' => $database
         ]
     ];
     sendResponse($response);
-
-    //print $sqlQuery;
 }
 
 function api_EVENTS_PUT_ID($id)
