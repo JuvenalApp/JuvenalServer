@@ -274,7 +274,7 @@ function api_EVENTS_GET_dispatch()
         }
     }
 
-    if (!getPermission("VIEW", getCurrentScope())) {
+    if (!getPermission("LIST", getCurrentScope())) {
         $response = [
             'status' => ['code' => 401],
             'error' => ['message' => 'Underprivileged API Key.']
