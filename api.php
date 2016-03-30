@@ -397,7 +397,7 @@ function api_EVENTS_GET_dispatch()
             {$begin}, {$end}
 EOF;
 
-    print "donuts";
+    error_log("DONUTS");
 
     try {
         $rows = $database->select($sqlQuery);
