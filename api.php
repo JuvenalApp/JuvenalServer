@@ -315,7 +315,7 @@ function api_EVENTS_GET_dispatch()
         // Did they provide Query parameters?
         if (key_exists('select', $requestQuery)) {
             // We've been given specific columns to Select.
-            $columns = explode(',', $requestQuery['select']);
+            $columns = explode(',', $requestQuery['select'] . ',');
 
             // Only include valid columns.
             foreach ($columns as $column) {
@@ -329,9 +329,12 @@ function api_EVENTS_GET_dispatch()
 
         if (key_exists('order', $requestQuery)) {
             // We've been given a specific order.
-            $columns = explode(',', $requestQuery['order']);
+            $columns = explode(',', $requestQuery['order'] . ',');
 
             foreach ($columns as $column) {
+                if (strlen($column) == 0) {
+                    continue;
+                }
 
                 // Did they give us a column name only, or a column name and direction?
                 if (stristr($column, " ") > 0) {
