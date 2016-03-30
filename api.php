@@ -288,8 +288,6 @@ function api_EVENTS_GET_dispatch()
         throw new BadRequestException($response);
     }
 
-    $scope = getCurrentScope();
-
     $eventColumns = [
         'session',
         'phonenumber',
@@ -302,6 +300,7 @@ function api_EVENTS_GET_dispatch()
     ];
 
     $columnsToSelect = [];
+    $orderByColumns = [];
 
     if (count($requestQuery) > 0) {
 
@@ -364,7 +363,20 @@ function api_EVENTS_GET_dispatch()
         $orderBy = $orderBy . join(",\n            ", $orderByColumns);
     }
 
-    $criteria = 1;
+    $scope = getCurrentScope();
+    $criteria = [];
+    if ($scope['product'] != "*") {
+        $criteria[] = "productkey=" .$scope['product'];
+    }
+    if ($scope['segment'] != "*") {
+        $criteria[] = "segmentkey=" . $scope['segment'];
+    }
+    if ($scope['event'] != "*") {
+        $criteria[] = "session='" . $scope['event'] . "''";
+    }
+
+    $whereClause = join("\n         AND ", $criteria);
+
     $begin = 0;
     $end = 0;
 
@@ -375,7 +387,7 @@ function api_EVENTS_GET_dispatch()
         FROM
             tbl__events
         WHERE
-            {$criteria}
+            {$whereClause}
         {$orderBy}
         LIMIT
             {$begin}, {$end}
