@@ -45,6 +45,7 @@ if (strpos($_SERVER['REQUEST_URI'], "?") > 0) {
 }
 
 $requestPath = strtolower($requestPath);
+$queryString = urldecode($queryString);
 
 foreach (explode('&', $queryString . '&') as $entry) {
     if (strlen($entry) > 0) {
@@ -338,8 +339,8 @@ function api_EVENTS_GET_dispatch()
                 }
 
                 // Did they give us a column name only, or a column name and direction?
-                if (strstr($column, '+') !== FALSE) {
-                    list($columnName, $direction) = explode('+', $column);
+                if (strstr($column, ' ') !== FALSE) {
+                    list($columnName, $direction) = explode(' ', $column);
                 } else {
                     $columnName = $column;
                     $direction = '';
