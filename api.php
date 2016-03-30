@@ -314,15 +314,7 @@ function api_EVENTS_GET_dispatch()
             $columns = explode(',', $requestQuery['select'] . ',');
 
             // Only include valid columns.
-            print_r(array_intersect($columns,$eventColumns));
-            foreach ($columns as $column) {
-                if (in_array($column, $eventColumns)) {
-                    $columnsToSelect[] = $column;
-                } else {
-                    // Intentionally dropping this invalid entry.
-                }
-            }
-            print_r($columnsToSelect);
+            $columnsToSelect = array_intersect($columns,$eventColumns);
         }
 
         if (key_exists('order', $requestQuery)) {
