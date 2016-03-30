@@ -366,15 +366,15 @@ function api_EVENTS_GET_dispatch()
     }
 
     $scope = getCurrentScope();
-    $criteria = [];
+    $criteria = '';
     if ($scope['product'] != "*") {
-        $criteria[] = "productkey=" .$scope['product'];
+        $criteria = "segmentkey IN (SELECT segmentkey FROM tbl__segments WHERE productkey=" .$scope['product'] . ")";
     }
     if ($scope['segment'] != "*") {
-        $criteria[] = "segmentkey=" . $scope['segment'];
+        $criteria = "segmentkey=" . $scope['segment'];
     }
     if ($scope['event'] != "*") {
-        $criteria[] = "session='" . $scope['event'] . "'";
+        $criteria = "session='" . $scope['event'] . "'";
     }
 
     $whereClause = join("\n         AND ", $criteria);
