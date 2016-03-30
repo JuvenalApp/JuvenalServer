@@ -395,9 +395,12 @@ function api_EVENTS_GET_dispatch()
             {$begin}, {$end}
 EOF;
 
-    //$rows = $database->select($sqlQuery);
+    $rows = $database->select($sqlQuery);
 
-    $response['data'] = $database->select($sqlQuery);
+    $response['data'] = [
+        'count' => count($rows),
+        'rows' => $rows
+    ];
     sendResponse($response);
 
     //print $sqlQuery;
