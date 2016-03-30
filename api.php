@@ -397,6 +397,8 @@ function api_EVENTS_GET_dispatch()
             {$begin}, {$end}
 EOF;
 
+    print "donuts";
+
     try {
         $rows = $database->select($sqlQuery);
     } catch (DatabaseNothingSelectedException $e) {
