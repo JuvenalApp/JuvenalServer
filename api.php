@@ -46,9 +46,11 @@ if (strpos($_SERVER['REQUEST_URI'], "?") > 0) {
 
 $requestPath = strtolower($requestPath);
 
-foreach (explode('&', $queryString) as $entry) {
-    list($key, $value) = explode('=', $entry);
-    $requestQuery[$key] = $value;
+foreach (explode('&', $queryString . '&') as $entry) {
+    if (strlen($entry) > 0) {
+        list($key, $value) = explode('=', $entry);
+        $requestQuery[$key] = $value;
+    }
 }
 
 print_r($requestQuery);
