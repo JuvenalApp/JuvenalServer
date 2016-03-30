@@ -417,10 +417,6 @@ EOF;
             'count' => count($rows),
             'rows' => $rows
         ],
-        'trace' => [
-            'sqlQuery' => $sqlQuery,
-            'database' => $database
-        ]
     ];
     sendResponse($response);
 }
