@@ -6,7 +6,7 @@ $API_PATH = '';
 $SQL_PREFIX = '';
 $CONNECTION_STRING = '';
 $requestPath = '';
-$requestFilter = '';
+$requestQuery = [];
 $database = null;
 
 /** @noinspection PhpIncludeInspection */
@@ -38,10 +38,15 @@ $method = $_SERVER['REQUEST_METHOD'];
 $pattern = '/^\/' . preg_quote($API_PATH, '/') . '([a-z0-9]{40}|)\/?(\w+$|\w+(?=[\/]))\/?(.+)?/';
 
 if (strpos($_SERVER['REQUEST_URI'], "?") > 0) {
-    list($requestPath, $requestFilter) = explode('?', strtolower($_SERVER['REQUEST_URI']));
+    list($requestPath, $queryString) = explode('?', strtolower($_SERVER['REQUEST_URI']));
 } else {
     $requestPath = $_SERVER['REQUEST_URI'];
-    $requestFilter = '';
+    $queryString = '';
+}
+
+foreach (explode('&', $queryString) as $entry) {
+    list($key, $value) = explode('=', $entry);
+    $requestQuery[$key] = $value;
 }
 
 /* Depending on server configuration,
@@ -221,6 +226,7 @@ function api_EVENTS_GET_dispatch()
 {
     //global $database;
     global $path;
+    global $requestQuery;
 
     switch (count($path)) {
         /** @noinspection PhpMissingBreakStatementInspection */
@@ -282,7 +288,101 @@ function api_EVENTS_GET_dispatch()
         throw new BadRequestException($response);
     }
 
-    print "Event list.";
+    $scope = getCurrentScope();
+
+    $eventColumns = [
+        'session',
+        'phonenumber',
+        'emailaddress',
+        'latitude',
+        'longitude',
+        'postal_code',
+        'returned_number',
+        'state'
+    ];
+
+    $columnsToSelect = [];
+
+    if (count($requestQuery) > 0) {
+
+        // Did they provide Query parameters?
+        if (key_exists('select', $requestQuery)) {
+            // We've been given specific columns to Select.
+            $columns = explode(',', $requestQuery['select']);
+
+            // Only include valid columns.
+            foreach ($columns as $column) {
+                if (key_exists($column, $eventColumns)) {
+                    $columnsToSelect[] = $column;
+                } else {
+                    // Intentionally dropping this invalid entry.
+                }
+            }
+        }
+
+        if (key_exists('order', $requestQuery)) {
+            // We've been given a specific order.
+            $columns = explode(',', $requestQuery['select']);
+
+            foreach ($columns as $column) {
+
+                // Did they give us a column name only, or a column name and direction?
+                if (stristr($column, " ") > 0) {
+                    list($columnName, $direction) = explode(' ', $column);
+                } else {
+                    $columnName = explode(' ', $column);
+                    $direction = '';
+                }
+
+                // Is it a valid column? Drop it if not.
+                if (key_exists($columnName, $eventColumns)) {
+                    switch ($direction) {
+                        case 'ASC':
+                        case 'DESC':
+                            // These are acceptable Order directions.
+                            break;
+                        default:
+                            $direction = 'ASC';
+                            break;
+                    }
+                    $orderByColumns[] = $columnName . " " . $direction;
+                } else {
+                    // Intentionally dropping this invalid entry.
+                }
+            }
+        }
+    }
+
+    if (count($columnsToSelect) == 0) {
+        $columnsToSelect = $eventColumns;
+    }
+    $columnsInQuery = join(",\n           ", $columnsToSelect);
+
+    $orderBy = '';
+    if (count($orderByColumns) > 0) {
+        $orderBy = "ORDER BY\n            ";
+        $orderBy = $orderBy . join(",\n            ", $orderByColumns);
+    }
+
+    $criteria = 1;
+    $begin = 0;
+    $end = 0;
+
+    $sqlQuery = <<<EOF
+            
+        SELECT
+            {$columnsInQuery}
+        FROM
+            tbl__events
+        WHERE
+            {$criteria}
+        {$orderBy}
+        LIMIT
+            {$begin}, {$end}
+EOF;
+
+
+    print $sqlQuery;
 }
 
 function api_EVENTS_PUT_ID($id)
@@ -390,8 +490,8 @@ function api_EVENTS_POST_dispatch()
                     (
                         session,
                         segmentkey,
-                        phone_number,
-                        email_address,
+                        phonenumber,
+                        emailaddress,
                         latitude,
                         longitude
                     ) VALUES (?, ?, ?, ?, ?, ?)
