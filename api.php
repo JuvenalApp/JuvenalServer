@@ -274,7 +274,7 @@ function api_EVENTS_GET_dispatch()
         }
     }
 
-    if (!getPermission("VIEW", getScopeByEventSession(''))) {
+    if (!getPermission("VIEW", getCurrentScope())) {
         $response = [
             'status' => ['code' => 401],
             'error' => ['message' => 'Underprivileged API Key.']
@@ -294,6 +294,7 @@ function api_EVENTS_POST_dispatch()
 {
     global $database;
     global $path;
+    global $apiKey;
 
     switch (count($path)) {
         /** @noinspection PhpMissingBreakStatementInspection */
@@ -723,4 +724,9 @@ EOF;
 
     // By virtue of LIMIT 1 this can only ever have a single row, so send back the zeroth element.
     return $database->select($sqlQuery, [['s' => $event]])[0];
+}
+
+function getCurrentScope() {
+    global $scope;
+    return $scope;
 }
