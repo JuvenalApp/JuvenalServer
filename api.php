@@ -231,6 +231,7 @@ function api_EVENTS_GET_dispatch()
     //global $database;
     global $path;
     global $requestQuery;
+    global $database;
 
     switch (count($path)) {
         /** @noinspection PhpMissingBreakStatementInspection */
@@ -328,16 +329,11 @@ function api_EVENTS_GET_dispatch()
 
                 // Did they give us a column name only, or a column name and direction?
                 if (strstr($column, '+') !== FALSE) {
-                    print "column and direction".
                     list($columnName, $direction) = explode('+', $column);
                 } else {
-                    print "column only".
                     $columnName = $column;
                     $direction = '';
                 }
-
-                print "columnName: {$columnName}\n";
-                print "direction: {$direction}\n";
 
                 // Is it a valid column? Drop it if not.
                 if (in_array($columnName, $eventColumns)) {
@@ -399,8 +395,12 @@ function api_EVENTS_GET_dispatch()
             {$begin}, {$end}
 EOF;
 
+    //$rows = $database->select($sqlQuery);
 
-    print $sqlQuery;
+    $response['data'] = $database->select($sqlQuery);
+    sendResponse($response);
+
+    //print $sqlQuery;
 }
 
 function api_EVENTS_PUT_ID($id)
