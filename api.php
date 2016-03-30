@@ -397,6 +397,9 @@ function api_EVENTS_GET_dispatch()
             {$begin}, {$end}
 EOF;
 
+    print "Donuts";
+    exit();
+    
     error_log("DONUTS");
 
     try {
