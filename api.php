@@ -366,20 +366,18 @@ function api_EVENTS_GET_dispatch()
     }
 
     $scope = getCurrentScope();
-    $criteria = '';
+    $whereClause = '';
 
     // Yes, we're intentionally replacing the criteria with a more specific one if applicable.
     if ($scope['product'] != "*") {
-        $criteria = "segmentkey IN (SELECT segmentkey FROM tbl__segments WHERE productkey=" .$scope['product'] . ")";
+        $whereClause = "segmentkey IN (SELECT segmentkey FROM tbl__segments WHERE productkey=" .$scope['product'] . ")";
     }
     if ($scope['segment'] != "*") {
-        $criteria = "segmentkey=" . $scope['segment'];
+        $whereClause = "segmentkey=" . $scope['segment'];
     }
     if ($scope['event'] != "*") {
-        $criteria = "session='" . $scope['event'] . "'";
+        $whereClause = "session='" . $scope['event'] . "'";
     }
-
-    $whereClause = join("\n         AND ", $criteria);
 
     $begin = 0;
     $end = 10;
