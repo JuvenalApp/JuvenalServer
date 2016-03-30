@@ -165,7 +165,7 @@ EOF;
     FROM
         tbl__{$table}
     WHERE
-        {$lookup}=(?)
+        {$lookup}=?
     LIMIT 1
 EOF;
 
