@@ -169,7 +169,11 @@ EOF;
     LIMIT 1
 EOF;
 
-            $scopeResult = $database->select($sqlQuery, [["i" => $parameter]])[0];
+            try {
+                $scopeResult = $database->select($sqlQuery, [["i" => $parameter]])[0];
+            } catch (DatabaseNothingSelectedException $e) {
+                throw new WhatTheHeckIsThisException([$sqlQuery , 'parameter' => $parameter , $e]);
+            }
 
             if (isset($scopeResult['productkey'])) {
                 $scope['product'] = $scopeResult['productkey'];
@@ -399,7 +403,7 @@ EOF;
 
     print "Donuts";
     exit();
-    
+
     error_log("DONUTS");
 
     try {
