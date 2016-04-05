@@ -212,6 +212,13 @@ try {
 exit();
 
 
+/**
+ * @throws BadRequestException
+ * @throws DatabaseInvalidQueryTypeException
+ * @throws DatabaseSelectQueryFailedException
+ * @throws DatabaseStatementNotPreparedException
+ * @throws WhatTheHeckIsThisException
+ */
 function api_SEARCH_GET_dispatch()
 {
     global $path;
@@ -228,7 +235,193 @@ function api_SEARCH_GET_dispatch()
         throw new BadRequestException($response);
     }
 
-    print "Search!";
+    global $requestQuery;
+    global $database;
+
+    switch (count($path)) {
+        /** @noinspection PhpMissingBreakStatementInspection */
+        case 1:
+            $criteria = $path[0];
+            break;
+        case 0:
+            break;
+        default:
+            $response = [
+                'status' => [
+                    'code' => 400
+                ],
+                'error' => [
+                    'message' => 'What are you doing?'
+                ],
+                'trace' => [
+                    $path
+                ]
+            ];
+            throw new BadRequestException($response);
+            break;
+    }
+
+
+    /** @noinspection PhpUndefinedVariableInspection */
+    if (!strpos($criteria, ":") === False) {
+        $response = [
+            'status' => ['code' => 401],
+            'error' => ['message' => 'Invalid Search Request']
+        ];
+        throw new BadRequestException($response);
+    }
+
+    list($criteria,$value) = explode(':', $criteria);
+
+    $validCriteria = [
+        'phone' => [
+            'filter' => FILTER_VALIDATE_INT,
+            'sqlField' => 'phoneNumber',
+            'sqlType' => 'i'
+        ],
+        'email' => [
+            'filter' => FILTER_VALIDATE_EMAIL,
+            'sqlField' => 'emailAddress',
+            'sqlType' => 's'
+        ]
+    ];
+
+    if (!key_exists($criteria, $validCriteria)) {
+        $response = [
+            'status' => ['code' => 401],
+            'error' => ['message' => 'Invalid Search Request']
+        ];
+        throw new BadRequestException($response);
+    }
+
+    $filter = $validCriteria[$criteria]['filter'];
+    $options = isset($validCriteria[$criteria]['options']) ? $validCriteria[$criteria]['options'] : [];
+
+    if (!filter_var($value, $filter, $options)) {
+        throw new BadRequestException(["Criteria `{$criteria}`: Invalid value."]);
+    }
+
+    $eventColumns = [
+        'session',
+        'created'
+    ];
+
+    $columnsToSelect = [];
+    $orderByColumns = [];
+
+    if (count($requestQuery) > 0) {
+
+        // Did they provide Query parameters?
+        if (key_exists('select', $requestQuery)) {
+            // We've been given specific columns to Select.
+            $columns = explode(',', $requestQuery['select'] . ',');
+
+            // Only include valid columns.
+            $columnsToSelect = array_intersect($columns,$eventColumns);
+        }
+
+        if (key_exists('order', $requestQuery)) {
+            // We've been given a specific order.
+            $columns = explode(',', $requestQuery['order'] . ',');
+
+            foreach ($columns as $column) {
+                if (strlen($column) == 0) {
+                    continue;
+                }
+
+                // Did they give us a column name only, or a column name and direction?
+                if (strstr($column, ' ') !== FALSE) {
+                    list($columnName, $direction) = explode(' ', $column);
+                } else {
+                    $columnName = $column;
+                    $direction = '';
+                }
+
+                // Is it a valid column? Drop it if not.
+                if (in_array($eventColumns, $columnName)) {
+                    switch ($direction) {
+                        case 'ASC':
+                        case 'DESC':
+                            // These are acceptable Order directions.
+                            break;
+                        default:
+                            $direction = 'ASC';
+                            break;
+                    }
+                    $orderByColumns[] = $columnName . " " . $direction;
+                } else {
+                    // Intentionally dropping this invalid entry.
+                }
+            }
+        }
+    }
+
+    if (count($columnsToSelect) == 0) {
+        $columnsToSelect = $eventColumns;
+    }
+    $columnsInQuery = join(",\n            ", $columnsToSelect);
+
+    $orderBy = '';
+    if (count($orderByColumns) > 0) {
+        $orderBy = "ORDER BY\n            ";
+        $orderBy = $orderBy . join(",\n            ", $orderByColumns);
+    }
+
+    $scope = getCurrentScope();
+
+    $whereCriteria = [];
+
+    // Yes, we're intentionally replacing the criteria with a more specific one if applicable.
+    if ($scope['product'] != "*") {
+        $whereCriteria[] = "segmentkey IN (SELECT segmentkey FROM tbl__segments WHERE productkey=" .$scope['product'] . ")";
+    }
+    if ($scope['segment'] != "*") {
+        $whereCriteria[] = "segmentkey=" . $scope['segment'];
+    }
+
+    $whereCriteria[] = $validCriteria[$criteria]['sqlField'] . '=?';
+
+    // By default, select nothing.
+    if (count($whereCriteria) == 0) {
+        $whereClause = 'FALSE';
+    } else {
+        $whereClause = join(",\n        AND ", $whereCriteria);
+    }
+
+    $begin = 0;
+    $end = 10;
+
+    $sqlQuery = <<<EOF
+
+        SELECT
+            {$columnsInQuery}
+        FROM
+            tbl__events
+        WHERE
+            {$whereClause}
+        {$orderBy}
+        LIMIT
+            {$begin}, {$end}
+EOF;
+
+    try {
+        $rows = $database->select($sqlQuery, [$validCriteria[$criteria['sqlType']], $value]);
+    } catch (DatabaseNothingSelectedException $e) {
+        // No rows is OK. Eat exception.
+        $rows = [];
+    }
+
+    $response = [
+        'status' => [
+            'code' => 200,
+            'message' => 'OK'
+        ],
+        'data' => [
+            'count' => count($rows),
+            'rows' => $rows
+        ],
+    ];
+    sendResponse($response);
 }
 
 function api_EVENTS_GET_dispatch()
@@ -516,7 +709,7 @@ function api_EVENTS_POST_dispatch()
                 $options = isset($parameters['options']) ? $parameters['options'] : [];
 
                 if (!filter_var($value, $filter, $options)) {
-                    throw new BadRequestException(["Parameter `{$key}`:`{$value}` is not valid."]);
+                    throw new BadRequestException(["Parameter `{$key}`: Invalid value."]);
                 }
             }
 
