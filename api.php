@@ -277,12 +277,12 @@ function api_SEARCH_GET_dispatch()
     $validCriteria = [
         'phone' => [
             'filter' => FILTER_VALIDATE_INT,
-            'sqlField' => 'phoneNumber',
+            'sqlField' => 'phonenumber',
             'sqlType' => 'i'
         ],
         'email' => [
             'filter' => FILTER_VALIDATE_EMAIL,
-            'sqlField' => 'emailAddress',
+            'sqlField' => 'emailaddress',
             'sqlType' => 's'
         ]
     ];
