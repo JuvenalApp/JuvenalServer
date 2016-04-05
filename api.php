@@ -239,8 +239,6 @@ function api_SEARCH_GET_dispatch()
     global $requestQuery;
     global $database;
 
-    print_r($path);
-
     switch (count($path)) {
         /** @noinspection PhpMissingBreakStatementInspection */
         case 1:
@@ -266,7 +264,7 @@ function api_SEARCH_GET_dispatch()
 
 
     /** @noinspection PhpUndefinedVariableInspection */
-    if (!strpos($criteria, ":") === False) {
+    if (strpos($criteria, ":") === False) {
         $response = [
             'status' => ['code' => 401],
             'error' => ['message' => 'Invalid Search Request']
