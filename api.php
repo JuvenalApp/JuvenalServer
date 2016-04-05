@@ -239,6 +239,8 @@ function api_SEARCH_GET_dispatch()
     global $requestQuery;
     global $database;
 
+    print_r($path);
+
     switch (count($path)) {
         /** @noinspection PhpMissingBreakStatementInspection */
         case 1:
