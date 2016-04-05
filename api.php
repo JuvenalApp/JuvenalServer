@@ -406,7 +406,7 @@ function api_SEARCH_GET_dispatch()
 EOF;
 
     try {
-        $rows = $database->select($sqlQuery, [$validCriteria[$criteria['sqlType']], $value]);
+        $rows = $database->select($sqlQuery, [$validCriteria[$criteria]['sqlType'], $value]);
     } catch (DatabaseNothingSelectedException $e) {
         // No rows is OK. Eat exception.
         $rows = [];
