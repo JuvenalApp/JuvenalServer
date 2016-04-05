@@ -386,7 +386,7 @@ function api_SEARCH_GET_dispatch()
     if (count($whereCriteria) == 0) {
         $whereClause = 'FALSE';
     } else {
-        $whereClause = join(",\n        AND ", $whereCriteria);
+        $whereClause = join("\n        AND ", $whereCriteria);
     }
 
     $begin = 0;
