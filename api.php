@@ -230,7 +230,8 @@ function api_SEARCH_GET_dispatch()
     if (!getPermission("LIST", getCurrentScope())) {
         $response = [
             'status' => ['code' => 401],
-            'error' => ['message' => 'Underprivileged API Key.']
+            'error' => ['message' => 'Underprivileged API Key.'],
+            'trace' => getCurrentScope()
         ];
         throw new BadRequestException($response);
     }
