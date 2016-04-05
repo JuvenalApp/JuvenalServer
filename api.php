@@ -227,7 +227,7 @@ function api_SEARCH_GET_dispatch()
         throw new BadRequestException([$path]);
     }
 
-    if (!getPermission("VIEW", getScopeByEventSession(''))) {
+    if (!getPermission("LIST", getScopeByEventSession(''))) {
         $response = [
             'status' => ['code' => 401],
             'error' => ['message' => 'Underprivileged API Key.']
