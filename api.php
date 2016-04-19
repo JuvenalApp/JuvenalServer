@@ -10,7 +10,7 @@ $requestQuery = [];
 $database = null;
 
 /** @noinspection PhpIncludeInspection */
-if (file_exists('../config.php')) {
+if (file_exists('../config.inc.php')) {
     require '../config.inc.php';
 } else {
     require 'config.inc.php';
