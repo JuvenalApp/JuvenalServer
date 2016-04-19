@@ -10,7 +10,11 @@ $requestQuery = [];
 $database = null;
 
 /** @noinspection PhpIncludeInspection */
-require 'config.inc.php';
+if (file_exists('../config.php')) {
+    require '../config.inc.php';
+} else {
+    require 'config.inc.php';
+}
 require 'exception.php';
 require 'MySQLiDriver.php';
 
