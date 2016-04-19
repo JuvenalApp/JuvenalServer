@@ -1,6 +1,6 @@
 <?php
 error_reporting(E_ALL);
-error_log("2016-04-19 16:08");
+error_log("2016-04-19 16:19");
 // Set these to -something- in case the include fails
 $API_PATH = '';
 $SQL_PREFIX = '';
@@ -655,11 +655,29 @@ EOF;
     try {
         $file = $database->select($sqlQuery, []); //  [ [ 's' => $session ], [ 'i' => $path[2] ] ]
     } catch (DatabaseNothingSelectedException $e) {
-        throw new BadRequestException();
+        $response = [
+            'status' => [
+                'code' => 404,
+                'message' => 'Not Found'
+            ],
+            'error' => [
+                'message' => 'That attachment is not found.',
+            ],
+        ];
+        throw new BadRequestException($response);
     }
 
     if (!file_exists($file[0]['filepath'])) {
-        throw new BadRequestException();
+        $response = [
+            'status' => [
+                'code' => 503,
+                'message' => 'Temporarily Not Available'
+            ],
+            'error' => [
+                'message' => 'The requested attachment cannot be provided right now.',
+            ],
+        ];
+        throw new BadRequestException($response);
     } else {
         header('X-Sendfile: ' . $file[0]['filepath']);
 
@@ -696,7 +714,16 @@ function api_EVENTS_POST_dispatch()
         /** @noinspection PhpMissingBreakStatementInspection */
         case 3:
             if ($path[2] != "") {
-                throw new BadRequestException();                
+                $response = [
+                    'status' => [
+                        'code' => 400,
+                        'message' => 'Bad Request'
+                    ],
+                    'error' => [
+                        'message' => 'Invalid Request Path',
+                    ],
+                ];
+                throw new BadRequestException($response);
             }
         case 2:
             $object2 = $path[1];
@@ -706,7 +733,16 @@ function api_EVENTS_POST_dispatch()
         case 0:
             break;
         default:
-            throw new BadRequestException();
+            $response = [
+                'status' => [
+                    'code' => 400,
+                    'message' => 'Bad Request'
+                ],
+                'error' => [
+                    'message' => 'Invalid Request Path',
+                ],
+            ];
+            throw new BadRequestException($response);
             break;
     }
 
@@ -730,7 +766,16 @@ function api_EVENTS_POST_dispatch()
                 $funcCall();
             }
         } else {
-            throw new BadRequestException();
+            $response = [
+                'status' => [
+                    'code' => 400,
+                    'message' => 'Bad Request'
+                ],
+                'error' => [
+                    'message' => 'Unsupported API Request.',
+                ],
+            ];
+            throw new BadRequestException($response);
         }
     } else {
         try {
