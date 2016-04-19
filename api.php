@@ -488,7 +488,7 @@ function api_EVENTS_GET_dispatch()
         } else {
             $response = [
                 'status' => ['code' => 400],
-                'error' => ['message' => 'Not supported']
+                'error' => ['message' => 'Not supported:' . $funcCall ]
             ];
             throw new BadRequestException($response);
         }
