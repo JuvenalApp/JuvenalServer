@@ -785,18 +785,18 @@ EOF;
         ];
         throw new BadRequestException($response);
     } else {
-        header('X-Sendfile: ' . $file[0]['filepath']);
+//        header('X-Sendfile: ' . $file[0]['filepath']);
 
-//        header('Content-Description: File Transfer');
-//        header('Content-Type: application/octet-stream');
-//        header('Content-Disposition: attachment; filename='.basename($file));
-//        header('Content-Transfer-Encoding: binary');
-//        header('Expires: 0');
-//        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-//        header('Pragma: public');
-//        header('Content-Length: ' . filesize($file));
-//
-//        readfile($file);
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename='.basename($file[0]['filename']));
+        header('Content-Transfer-Encoding: binary');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+        header('Pragma: public');
+        header('Content-Length: ' . filesize($file[0]['filepath']));
+
+        readfile($file[0]['filepath']);
         exit;
 
     }
