@@ -1,6 +1,6 @@
 <?php
 error_reporting(E_ALL);
-error_log("2016-04-19 16:06");
+error_log("2016-04-19 16:08");
 // Set these to -something- in case the include fails
 $API_PATH = '';
 $SQL_PREFIX = '';
@@ -947,7 +947,8 @@ EOF;
     $pattern = '/' . str_replace('\\', '\\\\', $_SERVER['DOCUMENT_ROOT']). '\/(.+)(?=\\\\.+\.php$)/';
     preg_match($pattern, $_SERVER['SCRIPT_FILENAME'], $matches);
 
-    $baseDir = $matches[1];
+    // $baseDir = $matches[1];
+    $baseDir = __DIR__;
 
     $i = 0;
     foreach ($_FILES as $file) {
