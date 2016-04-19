@@ -1,6 +1,6 @@
 <?php
 error_reporting(E_ALL);
-error_log("2016-04-19 16:19");
+error_log("2016-04-19 16:24");
 // Set these to -something- in case the include fails
 $API_PATH = '';
 $SQL_PREFIX = '';
@@ -772,7 +772,7 @@ function api_EVENTS_POST_dispatch()
                     'message' => 'Bad Request'
                 ],
                 'error' => [
-                    'message' => 'Unsupported API Request.' . $funcCall,
+                    'message' => 'Unsupported API Request.',
                 ],
             ];
             throw new BadRequestException($response);
