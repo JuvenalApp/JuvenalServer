@@ -1,6 +1,6 @@
 <?php
 error_reporting(E_ALL);
-error_log("2016-04-19 16:03");
+error_log("2016-04-19 16:06");
 // Set these to -something- in case the include fails
 $API_PATH = '';
 $SQL_PREFIX = '';
