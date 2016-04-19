@@ -772,7 +772,7 @@ function api_EVENTS_POST_dispatch()
                     'message' => 'Bad Request'
                 ],
                 'error' => [
-                    'message' => 'Unsupported API Request.',
+                    'message' => 'Unsupported API Request.' . $funcCall,
                 ],
             ];
             throw new BadRequestException($response);
