@@ -10,9 +10,9 @@ $requestQuery = [];
 $database = null;
 
 /** @noinspection PhpIncludeInspection */
-require '../config.inc.php';
+require 'config.inc.php';
 require 'exception.php';
-require 'mysqli.php';
+require 'MySQLiDriver.php';
 
 //main();
 //
@@ -44,6 +44,7 @@ if (strpos($_SERVER['REQUEST_URI'], "?") > 0) {
     $queryString = '';
 }
 
+$requestPath = str_replace("LeagleEye_API/", "", $requestPath);
 $requestPath = strtolower($requestPath);
 $queryString = urldecode($queryString);
 
@@ -172,7 +173,7 @@ EOF;
 
             try {
                 $scopeResult = $database->select($sqlQuery, [["i" => $parameter]])[0];
-            } catch (DatabaseNothingSelectedException $e) {
+             } catch (DatabaseNothingSelectedException $e) {
                 throw new WhatTheHeckIsThisException([$sqlQuery , 'parameter' => $parameter , $e]);
             }
 
@@ -190,7 +191,7 @@ try {
     if (function_exists($action)) {
         // Explicitly cast $action as a string to reassure the debugger.
         $action = (string)$action;
-        $action();
+        call_user_func($action);
     } else {
         $response = [
             'status' => [
@@ -434,6 +435,8 @@ function api_EVENTS_GET_dispatch()
 
     switch (count($path)) {
         /** @noinspection PhpMissingBreakStatementInspection */
+        case 3:
+            $id2 = $path[2];
         case 2:
             $object2 = $path[1];
         case 1:
@@ -457,16 +460,19 @@ function api_EVENTS_GET_dispatch()
             break;
     }
 
-    $funcCall = __FUNCTION__;
+    $funcCall = str_replace("_dispatch", "", __FUNCTION__);
     if (isset($session) && strlen($session) > 0) {
         $funcCall = $funcCall . '_ID';
         $parameter = $session;
         if (isset($object2) && strlen($object2) > 0) {
             $funcCall = $funcCall . '_' . strtoupper($object2);
         }
+        if (isset($id2) && strlen($id2) > 0) {
+            $funcCall = $funcCall . '_ID';
+        }
     }
 
-    if ($funcCall != __FUNCTION__) {
+    if ($funcCall != str_replace("_dispatch", "", __FUNCTION__)) {
         if (function_exists($funcCall)) {
             // Explicitly cast $action as a string to reassure the debugger.
             $funcCall = (string)$funcCall;
@@ -616,6 +622,61 @@ EOF;
     sendResponse($response);
 }
 
+function api_EVENTS_GET_ID_ATTACHMENTS_ID()
+{
+    global $path;
+    global $database;
+    $session = $path[0];
+
+    if (!getPermission("LIST", getScopeByEventSession($session))) {
+        throw new ApiKeyNotPrivilegedException();
+    }
+
+    $sqlQuery = <<<EOF
+
+        SELECT
+            filename,
+            filepath
+        FROM
+            tbl__files
+        INNER JOIN
+            tbl__events
+        ON
+            tbl__events.eventkey=tbl__files.eventkey
+        WHERE
+            tbl__events.session='{$session}'
+        AND tbl__files.filekey={$path[2]}
+EOF;
+
+    try {
+        $file = $database->select($sqlQuery, []); //  [ [ 's' => $session ], [ 'i' => $path[2] ] ]
+    } catch (DatabaseNothingSelectedException $e) {
+        throw new BadRequestException();
+    }
+
+    if (!file_exists($file[0]['filepath'])) {
+        throw new BadRequestException();
+    } else {
+        header('X-Sendfile: ' . $file[0]['filepath']);
+
+//        header('Content-Description: File Transfer');
+//        header('Content-Type: application/octet-stream');
+//        header('Content-Disposition: attachment; filename='.basename($file));
+//        header('Content-Transfer-Encoding: binary');
+//        header('Expires: 0');
+//        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+//        header('Pragma: public');
+//        header('Content-Length: ' . filesize($file));
+//
+//        readfile($file);
+        exit;
+
+    }
+
+
+}
+
+
 function api_EVENTS_PUT_ID($id)
 {
 
@@ -629,11 +690,15 @@ function api_EVENTS_POST_dispatch()
 
     switch (count($path)) {
         /** @noinspection PhpMissingBreakStatementInspection */
+        case 3:
+            if ($path[2] != "") {
+                throw new BadRequestException();                
+            }
         case 2:
             $object2 = $path[1];
         case 1:
             $session = $path[0];
-            break;
+            break;  
         case 0:
             break;
         default:
@@ -642,7 +707,7 @@ function api_EVENTS_POST_dispatch()
     }
 
 
-    $funcCall = __FUNCTION__;
+    $funcCall = str_replace("_dispatch", "", __FUNCTION__);
     if (isset($session) && strlen($session) > 0) {
         $funcCall = $funcCall . '_ID';
         $parameter = $session;
@@ -875,6 +940,11 @@ EOF;
 
     $sessionkey = $database->select($sqlQuery, [["s" => $id]])[0]['eventkey'];
 
+    $pattern = '/' . str_replace('\\', '\\\\', $_SERVER['DOCUMENT_ROOT']). '\/(.+)(?=\\\\.+\.php$)/';
+    preg_match($pattern, $_SERVER['SCRIPT_FILENAME'], $matches);
+
+    $baseDir = $matches[1];
+
     $i = 0;
     foreach ($_FILES as $file) {
         $status['data']['files'][$i]['trace'] = $file;
@@ -883,7 +953,7 @@ EOF;
             $status['data']['files'][$i]['error'] = $file['error'];
             $status['error']['count']++;
         } else {
-            $destination = getcwd() . DIRECTORY_SEPARATOR . 'up' . DIRECTORY_SEPARATOR . $id . '_' . $file['name'];
+            $destination = $baseDir . DIRECTORY_SEPARATOR . 'up' . DIRECTORY_SEPARATOR . $id . '_' . $file['name'];
             if (!move_uploaded_file($file['tmp_name'], $destination)) {
                 $status['data']['files'][$i]['error'] = "Failed to move `{$file['tmp_name']}` to `{$destination}`";
                 $status['error']['count']++;
@@ -969,6 +1039,7 @@ function generateApiKey($sessionId)
 
 function sendResponse($response, $exitAfter = true)
 {
+
     if ($response instanceof LeagleEyeException) {
         $base = $response->getResponse();
     } else {
