@@ -626,6 +626,112 @@ EOF;
     sendResponse($response);
 }
 
+function api_EVENTS_GET_ID() {
+    global $path;
+
+    if (!getPermission("LIST", getCurrentScope())) {
+        $response = [
+            'status' => ['code' => 401],
+            'error' => ['message' => 'Underprivileged API Key.'],
+            'trace' => getCurrentScope()
+        ];
+        throw new BadRequestException($response);
+    }
+
+    global $database;
+
+    switch (count($path)) {
+        /** @noinspection PhpMissingBreakStatementInspection */
+        case 1:
+            $session = $path[0];
+            break;
+        case 0:
+            break;
+        default:
+            $response = [
+                'status' => [
+                    'code' => 400
+                ],
+                'error' => [
+                    'message' => 'What are you doing?'
+                ],
+                'trace' => [
+                    $path
+                ]
+            ];
+            throw new BadRequestException($response);
+            break;
+    }
+
+    $sqlQuery = <<<EOF
+
+        SELECT
+            eventkey,
+            created,
+            session,
+            phonenumber,
+            emailaddress,
+            latitude,
+            longitude,
+            postal_code,
+            returned_number,
+            state
+        FROM
+            tbl__events
+        WHERE
+            session=?
+        LIMIT
+            1
+            
+EOF;
+
+    try {
+        $rows = $database->select($sqlQuery, [ [ 's' => $session] ]);
+    } catch (DatabaseNothingSelectedException $e) {
+        // No rows is OK. Eat exception.
+        $rows = [];
+    }
+
+    if (count($rows) > 0) {
+        $sqlQuery = <<<EOF
+    
+            SELECT
+                filekey,
+                filename
+            FROM
+                tbl__files
+            WHERE
+                eventkey=?
+            LIMIT
+                1
+                
+EOF;
+
+        try {
+            $files = $database->select($sqlQuery, [['i' => $rows[0]['eventkey']]]);
+        } catch (DatabaseNothingSelectedException $e) {
+            // No rows is OK. Eat exception.
+            $files = [];
+        }
+
+        $rows[0]['files'] = $files;
+    }
+
+    unset($rows[0]['eventkey']);
+
+    $response = [
+        'status' => [
+            'code' => 200,
+            'message' => 'OK'
+        ],
+        'data' => [
+            'count' => count($rows),
+            'rows' => $rows
+        ],
+    ];
+    sendResponse($response);
+}
+
 function api_EVENTS_GET_ID_ATTACHMENTS_ID()
 {
     global $path;
@@ -1183,4 +1289,4 @@ EOF;
 function getCurrentScope() {
     global $scope;
     return $scope;
-}
+}                
