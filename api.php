@@ -842,6 +842,7 @@ EOF;
                     scope,
                     ALLOW_RENEW,
                     ALLOW_UPLOAD,
+                    ALLOW_LIST,
                     apikey,
                     scopekey
                 )
@@ -849,6 +850,7 @@ EOF;
                 (
                     DATE_ADD(NOW(), INTERVAL 1 HOUR),
                     'EVENT',
+                    1,
                     1,
                     1,
                     ?, ?
