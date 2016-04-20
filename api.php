@@ -944,8 +944,9 @@ function api_EVENTS_POST_dispatch()
                         phonenumber,
                         emailaddress,
                         latitude,
-                        longitude
-                    ) VALUES (?, ?, ?, ?, ?, ?)
+                        longitude,
+                        state
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
         
 EOF;
 
@@ -966,7 +967,8 @@ EOF;
                             ['s' => $jsonRequest['phoneNumber']],
                             ['s' => $jsonRequest['emailAddress']],
                             ['d' => $jsonRequest['latitude']],
-                            ['d' => $jsonRequest['longitude']]
+                            ['d' => $jsonRequest['longitude']],
+                            ['s' => $jsonRequest['state']]
                         ]
                     );
 
