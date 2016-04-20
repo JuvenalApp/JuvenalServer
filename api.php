@@ -908,7 +908,7 @@ function api_EVENTS_POST_dispatch()
                     'filter' => FILTER_VALIDATE_REGEXP,
                     'options' => [
                         'options' => [
-                            'regexp' => "/^[A-Z]{2}$/"
+                            'regexp' => "/^[A-Z ]{4,50}$/"
                         ]
                     ]
                 ],
