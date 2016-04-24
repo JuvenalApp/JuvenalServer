@@ -14,6 +14,7 @@ $requestPath       = '';
 $requestQuery      = [ ];
 $database          = null;
 $path              = null;
+$scope             = null;
 $object            = null;
 
 // Accomodate local testing that can't go above webroot.
@@ -34,7 +35,7 @@ exit();
 
 function main() {
     global $API_PATH, $CONNECTION_STRING, $requestPath, $requestQuery,
-           $database, $path, $object;
+           $database, $path, $object, $scope;
 
     // @todo This should probably be sanitized/validated against a whitelist like event creation and searching are.
     $method  = $_SERVER['REQUEST_METHOD'];
