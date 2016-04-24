@@ -983,16 +983,13 @@ EOF;
                 )
             );
 
-            $result = file_get_contents
+            $dialbackNumber = file_get_contents
             ($dialbackQuery[0]['productphoneserver'], false,
                 stream_context_create
                 ($options));
 
-            var_dump($dialbackQuery[0]['productphoneserver']);
-            var_dump($result);
-            exit();
-
-            if ($result === FALSE) { /* Handle error */
+            if ($dialbackNumber === FALSE) { /* Handle error */
+                throw new NoDialbackNumberProvidedException();
             }
 
             $dialbackQuery->close();
@@ -1008,8 +1005,9 @@ EOF;
                         emailaddress,
                         latitude,
                         longitude,
-                        state
-                    ) VALUES (?, ?, ?, ?, ?, ?)
+                        state,
+                        returned_number
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
         
 EOF;
 
@@ -1031,7 +1029,8 @@ EOF;
                             [ 's' => $jsonRequest['emailAddress'] ],
                             [ 'd' => $jsonRequest['latitude'] ],
                             [ 'd' => $jsonRequest['longitude'] ],
-                            [ 's' => $jsonRequest['state'] ]
+                            [ 's' => $jsonRequest['state'] ],
+                            [ 'i' => $dialbackNumber ]
                         ]
                     );
 
@@ -1111,7 +1110,7 @@ EOF;
             $response = [
                 'data'   => [
                     'session' => $sessionId,
-                    'dial'    => "+1 407 934 7639",
+                    'dial'    => $dialbackNumber,
                     'apiKey'  => $apiKey
                 ],
                 'status' => [
