@@ -299,7 +299,7 @@ function api_SEARCH_GET_dispatch() {
                 'options' => [
                     'regexp' => "/^[0-9]+$/"
                 ]
-            ]
+            ],
             'sqlField' => 'phonenumber',
             'sqlType'  => 'i'
         ],
