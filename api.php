@@ -4,8 +4,6 @@
 error_reporting(E_ALL);
 
 /** @var MySQLiDriver $database */
-
-
 // Set these to -something- in case the include fails
 $API_PATH          = '';
 $SQL_PREFIX        = '';
@@ -34,6 +32,20 @@ require 'MySQLiDriver.php';
 main();
 exit();
 
+/**
+ * Builds our environment and populates global variables.
+ *
+ * Rebuilds query string data because some environments consider the entire
+ * path to be in the query string. Parses REQUEST_URI into the actual API
+ * call. Connects to database. Validates API key and gets privilege scope.
+ * Does initial API dispatch to handlers.
+ *
+ * @throws ApiKeyNotPrivilegedException
+ * @throws DatabaseInvalidQueryTypeException
+ * @throws DatabaseSelectQueryFailedException
+ * @throws DatabaseStatementNotPreparedException
+ * @throws WhatTheHeckIsThisException
+ */
 function main() {
     global $API_PATH, $CONNECTION_STRING, $requestPath, $requestQuery,
            $database, $path, $object, $scope, $permissions;
@@ -50,7 +62,9 @@ function main() {
         $queryString = '';
     }
 
+    // @todo This was added for local debugging and can be removed.
     $requestPath = str_replace("LeagleEye_API/", "", $requestPath);
+
     $requestPath = strtolower($requestPath);
     $queryString = urldecode($queryString);
 
@@ -227,10 +241,16 @@ EOF;
     }
 }
 
+
 /**
- * Dispatch function for /api/search
+ * Dispatch function for GET /search
  *
- * Validates API Key permissions and checks input.
+ * Validates API Key permissions and validates search criteria. Only accepts
+ * whitelisted fields and uses query parameters to fight SQL injection. Only
+ * returns results within scope of API key. Allows user to specify which
+ * columns to return and order of return.
+ *
+ * @todo Allow user to set start/end limit.
  *
  * @throws BadRequestException
  * @throws DatabaseInvalidQueryTypeException
@@ -465,6 +485,22 @@ EOF;
     sendResponse($response);
 }
 
+/**
+ * Dispatch function for GET /events
+ *
+ * Determines what the user is asking for -- Event info, attachment info --
+ * and returns it.  Attachments are returned directly.  If no Event ID is
+ * included in the call, lists events user has access to see with API key.
+ *
+ * @todo Use api_EVENTS_GET_ID to return event information when scope is
+ *        Session-only.
+ *
+ * @throws BadRequestException
+ * @throws DatabaseInvalidQueryTypeException
+ * @throws DatabaseSelectQueryFailedException
+ * @throws DatabaseStatementNotPreparedException
+ * @throws WhatTheHeckIsThisException
+ */
 function api_EVENTS_GET_dispatch() {
     global $path;
     global $requestQuery;
@@ -664,6 +700,18 @@ EOF;
     sendResponse($response);
 }
 
+/**
+ * Handler function for GET /events/:SESSION
+ *
+ * Returns event information for given Session including attachment count and
+ * IDs.
+ *
+ * @throws BadRequestException
+ * @throws DatabaseInvalidQueryTypeException
+ * @throws DatabaseSelectQueryFailedException
+ * @throws DatabaseStatementNotPreparedException
+ * @throws WhatTheHeckIsThisException
+ */
 function api_EVENTS_GET_ID() {
     global $path;
 
@@ -772,6 +820,18 @@ EOF;
     sendResponse($response);
 }
 
+/**
+ * Handler function for GET /events/:SESSION/attachments/:ID
+ *
+ * Loads the specified attachment and prompts the browser to download it.
+ *
+ * @throws ApiKeyNotPrivilegedException
+ * @throws BadRequestException
+ * @throws DatabaseInvalidQueryTypeException
+ * @throws DatabaseSelectQueryFailedException
+ * @throws DatabaseStatementNotPreparedException
+ * @throws WhatTheHeckIsThisException
+ */
 function api_EVENTS_GET_ID_ATTACHMENTS_ID() {
     global $path;
     global $database;
@@ -844,6 +904,23 @@ EOF;
 
 }
 
+/**
+ * Dispatch function for POST /events
+ *
+ * Determines what the user is requesting -- for example, to add an
+ * attachment or to create a new session -- and dispatches or handles.
+ *
+ * If a new event is requested, takes user input and turns it into an event,
+ * including web call to Dialback provider, Event insertion, and API key
+ * creation.
+ *
+ * @todo Why does event creation need to be JSON? Seemed like a good idea at
+ *        the time. Move to just HTTP POST fields.
+ *
+ * @todo Assumes web call for Dialback number succeeded. Add failure handling.
+ *
+ * @throws BadRequestException
+ */
 function api_EVENTS_POST_dispatch() {
     global $database;
     global $path;
@@ -1150,6 +1227,25 @@ EOF;
 
 }
 
+/**
+ *  Handler function for GET /events/:SESSION/attachments/:ID
+ *
+ * Receives attachment(s), saves to disk, and adds to database. Renews API
+ * key when file received.
+ *
+ * @param string $id Session ID provided by the dispatcher.
+ *
+ * @throws ApiKeyNotPrivilegedException
+ * @throws DatabaseInsertQueryFailedException
+ * @throws DatabaseInvalidQueryTypeException
+ * @throws DatabaseNothingSelectedException
+ * @throws DatabaseRowNotInsertedException
+ * @throws DatabaseSelectQueryFailedException
+ * @throws DatabaseStatementNotPreparedException
+ * @throws InvalidIdentifierException
+ * @throws NoFilesProvidedException
+ * @throws WhatTheHeckIsThisException
+ */
 function api_EVENTS_POST_ID_ATTACHMENTS($id) {
     global $database;
 
@@ -1279,14 +1375,39 @@ EOF;
     sendResponse($status);
 }
 
+/**
+ * Generates Session ID.
+ *
+ * Uses collection of unambiguous letters and numbers to generate unique IDs
+ * for sessions.
+ *
+ * @return string The generated ID.
+ */
 function generateSessionId() {
     return strtoupper(substr(str_shuffle(str_repeat("aeufhlmr145670", 8)), 0, 8));
 }
 
+/**
+ * Generates API Key.
+ *
+ * Returns SHA-1 of Session ID, Current Time, and random number.
+ *
+ * @param string $sessionId Session ID associated with API key.
+ *
+ * @return string Generated API key.
+ */
 function generateApiKey($sessionId) {
     return sha1($sessionId . microtime(true) . mt_rand(10000, 90000));
 }
 
+/**
+ * Sends response to browser.
+ *
+ * @todo Make this handle XML and maybe even SOAP because why not.
+ *
+ * @param string $response The unencoded response to send
+ * @param bool $exitAfter Whether or not to exit after sending (default: true)
+ */
 function sendResponse($response, $exitAfter = true) {
 
     if ($response instanceof LeagleEyeException) {
@@ -1331,6 +1452,15 @@ function sendResponse($response, $exitAfter = true) {
     }
 }
 
+/**
+ * Checks if the scope of the current API key is compatibile with the
+ * requested operatiion.
+ *
+ * @param string $action The action to do. 1:1 with ALLOW_x in database.
+ * @param array $compare The scope when requesting the action.
+ *
+ * @return bool If permission was granted
+ */
 function getPermission($action, $compare = array()) {
     global $scope;
     global $permissions;
@@ -1354,6 +1484,19 @@ function getPermission($action, $compare = array()) {
     }
 }
 
+/**
+ * Returns the scope associated with an Event.
+ *
+ * @param string $event
+ *
+ * @return array An array with the scope associated to that event.
+ *
+ * @throws DatabaseInvalidQueryTypeException
+ * @throws DatabaseNothingSelectedException
+ * @throws DatabaseSelectQueryFailedException
+ * @throws DatabaseStatementNotPreparedException
+ * @throws WhatTheHeckIsThisException
+ */
 function getScopeByEventSession($event) {
     global $database;
 
@@ -1377,6 +1520,11 @@ EOF;
     return $database->select($sqlQuery, [ [ 's' => $event ] ])[0];
 }
 
+/**
+ * Returns the current scope by API key.
+ *
+ * @return array
+ */
 function getCurrentScope() {
     global $scope;
 
