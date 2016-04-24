@@ -447,6 +447,8 @@ EOF;
     } catch (DatabaseNothingSelectedException $e) {
         // No rows is OK. Eat exception.
         var_dump($sqlQuery);
+        var_dump($validCriteria[ $criteria ]['sqlType']);
+        var_dump($value);
         $rows = [ ];
     }
 
