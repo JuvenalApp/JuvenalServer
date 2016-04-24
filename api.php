@@ -122,6 +122,9 @@ EOF;
             throw new ApiKeyNotPrivilegedException([ $apiKey ], $e);
         }
 
+        $field = '';
+        $lookup = '';
+
         $parameter = '';
         if ($permissions['is_expired']) {
             $scope = array();
@@ -449,6 +452,7 @@ function api_EVENTS_GET_dispatch() {
         /** @noinspection PhpMissingBreakStatementInspection */
         case 3:
             $id2 = $path[2];
+        /** @noinspection PhpMissingBreakStatementInspection */
         case 2:
             $object2 = $path[1];
         case 1:
