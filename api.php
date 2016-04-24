@@ -3,14 +3,18 @@
 // @todo Turn this down in production code.
 error_reporting(E_ALL);
 
+/** @var MySQLiDriver $database */
+
+
 // Set these to -something- in case the include fails
 $API_PATH          = '';
 $SQL_PREFIX        = '';
 $CONNECTION_STRING = '';
 $requestPath       = '';
 $requestQuery      = [ ];
-/** @var MySQLiDriver $database */
 $database          = null;
+$path              = null;
+$object            = null;
 
 // Accomodate local testing that can't go above webroot.
 // @todo Take this out of production code.
@@ -29,7 +33,8 @@ main();
 exit();
 
 function main() {
-    global $API_PATH, $CONNECTION_STRING, $requestPath, $requestQuery, $database;
+    global $API_PATH, $CONNECTION_STRING, $requestPath, $requestQuery,
+           $database, $path, $object;
 
     // @todo This should probably be sanitized/validated against a whitelist like event creation and searching are.
     $method  = $_SERVER['REQUEST_METHOD'];
@@ -63,10 +68,6 @@ function main() {
     }
 
     preg_match($pattern, $requestPath, $matches);
-
-    /** @noinspection PhpUnusedLocalVariableInspection */
-    $path   = '';
-    $object = '';
 
     switch (count($matches)) {
         /** @noinspection PhpMissingBreakStatementInspection */
@@ -123,7 +124,7 @@ EOF;
             throw new ApiKeyNotPrivilegedException([ $apiKey ], $e);
         }
 
-        $field = '';
+        $field  = '';
         $lookup = '';
 
         $parameter = '';
@@ -822,11 +823,6 @@ EOF;
 
 }
 
-
-function api_EVENTS_PUT_ID($id) {
-
-}
-
 function api_EVENTS_POST_dispatch() {
     global $database;
     global $path;
@@ -1004,7 +1000,7 @@ EOF;
                 ($options));
 
             if ($dialbackNumber === FALSE) { /* Handle error */
-                throw new NoDialbackNumberProvidedException([]);
+                throw new NoDialbackNumberProvidedException([ ]);
             }
 
             $sqlQuery = <<<EOF
