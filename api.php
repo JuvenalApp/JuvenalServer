@@ -998,8 +998,6 @@ EOF;
                 stream_context_create
                 ($options));
 
-            var_dump($dialbackNumber);
-
             if ($dialbackNumber === FALSE) { /* Handle error */
                 throw new NoDialbackNumberProvidedException([]);
             }
