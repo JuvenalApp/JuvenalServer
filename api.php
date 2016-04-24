@@ -1016,7 +1016,7 @@ EOF;
                         latitude,
                         longitude,
                         state,
-                        returned_number
+                        dialbacknumber
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         
 EOF;
