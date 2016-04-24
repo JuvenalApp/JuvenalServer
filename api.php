@@ -311,7 +311,7 @@ function api_SEARCH_GET_dispatch() {
                 ]
             ],
             'sqlField' => 'dialbacknumber',
-            'sqlType'  => 'i'
+            'sqlType'  => 's'
         ],
         'email' => [
             'filter'   => FILTER_VALIDATE_EMAIL,
