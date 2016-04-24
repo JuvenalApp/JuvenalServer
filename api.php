@@ -1,100 +1,101 @@
 <?php
-error_reporting(E_ALL);
-error_log("2016-04-19 16:24");
-// Set these to -something- in case the include fails
-$API_PATH = '';
-$SQL_PREFIX = '';
-$CONNECTION_STRING = '';
-$requestPath = '';
-$requestQuery = [];
-$database = null;
 
+// @todo Turn this down in production code.
+error_reporting(E_ALL);
+
+// Set these to -something- in case the include fails
+$API_PATH          = '';
+$SQL_PREFIX        = '';
+$CONNECTION_STRING = '';
+$requestPath       = '';
+$requestQuery      = [ ];
+$database          = null;
+
+// Accomodate local testing that can't go above webroot.
+// @todo Take this out of production code.
 /** @noinspection PhpIncludeInspection */
 if (file_exists('../config.inc.php')) {
     require '../config.inc.php';
-} else {
+}
+else {
     require 'config.inc.php';
 }
 require 'exception.php';
 require 'MySQLiDriver.php';
 
-//main();
-//
-//exit();
-//
-//function main()
-//{
-//    global $API_PATH;
-//    global $CONNECTION_STRING;
-//    global $mysqlCredentials;
-//    global $requestPath;
-//    global $requestFilter;
-//    global $database;
+main();
+exit();
 
-$mysqlCredentials = [];
+function main() {
+    global $API_PATH, $SQL_PREFIX, $CONNECTION_STRING, $requestPath, $requestQuery, $database;
 
-foreach (explode(';', $CONNECTION_STRING) as $entry) {
-    list($key, $value) = explode('=', $entry);
-    $mysqlCredentials[$key] = $value;
-}
+    // @todo This should probably be sanitized/validated against a whitelist like event creation and searching are.
+    $method  = $_SERVER['REQUEST_METHOD'];
+    $pattern = '/^\/' . preg_quote($API_PATH, '/') . '([a-z0-9]{40}|)\/?(\w+$|\w+(?=[\/]))\/?(.+)?/';
 
-$method = $_SERVER['REQUEST_METHOD'];
-$pattern = '/^\/' . preg_quote($API_PATH, '/') . '([a-z0-9]{40}|)\/?(\w+$|\w+(?=[\/]))\/?(.+)?/';
-
-if (strpos($_SERVER['REQUEST_URI'], "?") > 0) {
-    list($requestPath, $queryString) = explode('?', $_SERVER['REQUEST_URI']);
-} else {
-    $requestPath = $_SERVER['REQUEST_URI'];
-    $queryString = '';
-}
-
-$requestPath = str_replace("LeagleEye_API/", "", $requestPath);
-$requestPath = strtolower($requestPath);
-$queryString = urldecode($queryString);
-
-foreach (explode('&', $queryString . '&') as $entry) {
-    if (strlen($entry) > 0) {
-        list($key, $value) = explode('=', $entry);
-        $requestQuery[$key] = $value;
+    if (strpos($_SERVER['REQUEST_URI'], "?") > 0) {
+        list($requestPath, $queryString) = explode('?', $_SERVER['REQUEST_URI']);
     }
-}
+    else {
+        $requestPath = $_SERVER['REQUEST_URI'];
+        $queryString = '';
+    }
 
-/* Depending on server configuration,
-   the path may or more not start with /
-*/
+    $requestPath = str_replace("LeagleEye_API/", "", $requestPath);
+    $requestPath = strtolower($requestPath);
+    $queryString = urldecode($queryString);
 
-if (substr($requestPath, 0, 1) != '/') {
-    $requestPath = "/" . $requestPath;
-}
+    foreach (explode('&', $queryString . '&') as $entry) {
+        if (strlen($entry) > 0) {
+            list($key, $value) = explode('=', $entry);
+            $requestQuery[ $key ] = $value;
+        }
+    }
 
-preg_match($pattern, $requestPath, $matches);
+    /* Depending on server configuration,
+       the path may or more not start with /
+    */
 
-$path = '';
-$object = '';
+    if (substr($requestPath, 0, 1) != '/') {
+        $requestPath = "/" . $requestPath;
+    }
 
-switch (count($matches)) {
-    /** @noinspection PhpMissingBreakStatementInspection */
-    case 4:
-        $path = explode("/", $matches[3]);
-    /** @noinspection PhpMissingBreakStatementInspection */
-    case 3:
-        $object = $matches[2];
-    case 2:
-        $apiKey = $matches[1];
-        break;
-}
+    preg_match($pattern, $requestPath, $matches);
 
-$action = 'api_' . strtoupper($object . '_' . $method) . '_dispatch';
-$action = filter_var($action, FILTER_SANITIZE_EMAIL);
+    $path   = '';
+    $object = '';
 
-try {
-    $database = new MySQLiDriver($mysqlCredentials);
-} catch (Exception $e) {
-    sendResponse([$e]);
-}
+    switch (count($matches)) {
+        /** @noinspection PhpMissingBreakStatementInspection */
+        case 4:
+            $path = explode("/", $matches[3]);
+        /** @noinspection PhpMissingBreakStatementInspection */
+        case 3:
+            $object = $matches[2];
+        case 2:
+            $apiKey = $matches[1];
+            break;
+    }
 
-if (isset($apiKey) && strlen($apiKey) == 40) {
-    $sqlQuery = <<<EOF
+    $action = 'api_' . strtoupper($object . '_' . $method) . '_dispatch';
+    $action = filter_var($action, FILTER_SANITIZE_EMAIL);
+
+
+    $mysqlCredentials = [ ];
+
+    try {
+        foreach (explode(';', $CONNECTION_STRING) as $entry) {
+            list($key, $value) = explode('=', $entry);
+            $mysqlCredentials[ $key ] = $value;
+        }
+
+        $database = new MySQLiDriver($mysqlCredentials);
+    } catch (Exception $e) {
+        sendResponse([ $e ]);
+    }
+
+    if (isset($apiKey) && strlen($apiKey) == 40) {
+        $sqlQuery = <<<EOF
 SELECT
     is_expired,
     scope,
@@ -112,60 +113,61 @@ WHERE
 LIMIT 1
 EOF;
 
-    $permissions = null;
-    try {
-        $permissions = $database->select($sqlQuery, [['s' => $apiKey]])[0];
-    } catch (DatabaseNothingSelectedException $e) {
-        throw new ApiKeyNotPrivilegedException([$apiKey], $e);
-    }
-
-    $parameter = '';
-    if ($permissions['is_expired']) {
-        $scope = array();
-    } else {
-        switch ($permissions['scope']) {
-            case 'GLOBAL':
-                $scope['product'] = "*";
-                $scope['segment'] = "*";
-                $scope['event'] = "*";
-                break;
-            case 'PRODUCT':
-                $scope['product'] = $permissions['scopekey'];
-                $scope['segment'] = "*";
-                $scope['event'] = "*";
-                break;
-            case 'SEGMENT':
-                $scope['segment'] = $permissions['scopekey'];
-                $scope['event'] = "*";
-                $field = 'productkey';
-                $table = 'segments';
-                $lookup = 'segmentkey';
-                $parameter = $permissions['scopekey'];
-                break;
-            case 'EVENT':
-                $scope['product'] = "*";
-                $scope['segment'] = "*";
-                $field = "session";
-                $table = 'events';
-                $lookup = 'eventkey';
-                $parameter = $permissions['scopekey'];
-                break;
-            default:
-                $response = [
-                    'status' => [
-                        'code' => 500
-                    ],
-                    'error' => [
-                        'message' => 'Database Sanity Error'
-                    ],
-                    'trace' => [$database]
-                ];
-                throw new WhatTheHeckIsThisException($response);
-                break;
+        $permissions = null;
+        try {
+            $permissions = $database->select($sqlQuery, [ [ 's' => $apiKey ] ])[0];
+        } catch (DatabaseNothingSelectedException $e) {
+            throw new ApiKeyNotPrivilegedException([ $apiKey ], $e);
         }
 
-        if (isset($table)) {
-            $sqlQuery = <<<EOF
+        $parameter = '';
+        if ($permissions['is_expired']) {
+            $scope = array();
+        }
+        else {
+            switch ($permissions['scope']) {
+                case 'GLOBAL':
+                    $scope['product'] = "*";
+                    $scope['segment'] = "*";
+                    $scope['event']   = "*";
+                    break;
+                case 'PRODUCT':
+                    $scope['product'] = $permissions['scopekey'];
+                    $scope['segment'] = "*";
+                    $scope['event']   = "*";
+                    break;
+                case 'SEGMENT':
+                    $scope['segment'] = $permissions['scopekey'];
+                    $scope['event']   = "*";
+                    $field            = 'productkey';
+                    $table            = 'segments';
+                    $lookup           = 'segmentkey';
+                    $parameter        = $permissions['scopekey'];
+                    break;
+                case 'EVENT':
+                    $scope['product'] = "*";
+                    $scope['segment'] = "*";
+                    $field            = "session";
+                    $table            = 'events';
+                    $lookup           = 'eventkey';
+                    $parameter        = $permissions['scopekey'];
+                    break;
+                default:
+                    $response = [
+                        'status' => [
+                            'code' => 500
+                        ],
+                        'error'  => [
+                            'message' => 'Database Sanity Error'
+                        ],
+                        'trace'  => [ $database ]
+                    ];
+                    throw new WhatTheHeckIsThisException($response);
+                    break;
+            }
+
+            if (isset($table)) {
+                $sqlQuery = <<<EOF
     SELECT
         {$field}
     FROM
@@ -175,68 +177,70 @@ EOF;
     LIMIT 1
 EOF;
 
-            try {
-                $scopeResult = $database->select($sqlQuery, [["i" => $parameter]])[0];
-             } catch (DatabaseNothingSelectedException $e) {
-                throw new WhatTheHeckIsThisException([$sqlQuery , 'parameter' => $parameter , $e]);
-            }
+                try {
+                    $scopeResult = $database->select($sqlQuery, [ [ "i" => $parameter ] ])[0];
+                } catch (DatabaseNothingSelectedException $e) {
+                    throw new WhatTheHeckIsThisException([ $sqlQuery, 'parameter' => $parameter, $e ]);
+                }
 
-            if (isset($scopeResult['productkey'])) {
-                $scope['product'] = $scopeResult['productkey'];
-            }
-            if (isset($scopeResult['session'])) {
-                $scope['event'] = $scopeResult['session'];
+                if (isset($scopeResult['productkey'])) {
+                    $scope['product'] = $scopeResult['productkey'];
+                }
+                if (isset($scopeResult['session'])) {
+                    $scope['event'] = $scopeResult['session'];
+                }
             }
         }
     }
-}
 
-try {
-    if (function_exists($action)) {
-        // Explicitly cast $action as a string to reassure the debugger.
-        $action = (string)$action;
-        call_user_func($action);
-    } else {
-        $response = [
-            'status' => [
-                'code' => 400
-            ],
-            'error' => [
-                'message' => "HTTP `{$method}` not supported for object `{$object}`."
-            ],
-            'trace' => [
-                $database
-            ]
-        ];
-        throw new BadRequestException($response);
+    try {
+        if (function_exists($action)) {
+            // Explicitly cast $action as a string to reassure the debugger.
+            $action = (string)$action;
+            call_user_func($action);
+        }
+        else {
+            $response = [
+                'status' => [
+                    'code' => 400
+                ],
+                'error'  => [
+                    'message' => "HTTP `{$method}` not supported for object `{$object}`."
+                ],
+                'trace'  => [
+                    $database
+                ]
+            ];
+            throw new BadRequestException($response);
+        }
+    } catch (Exception $e) {
+        sendResponse($e);
     }
-} catch (Exception $e) {
-    sendResponse($e);
 }
-
-exit();
-
 
 /**
+ * Dispatch function for /api/search
+ *
+ * Validates API Key permissions and checks input.
+ *
  * @throws BadRequestException
  * @throws DatabaseInvalidQueryTypeException
  * @throws DatabaseSelectQueryFailedException
  * @throws DatabaseStatementNotPreparedException
  * @throws WhatTheHeckIsThisException
  */
-function api_SEARCH_GET_dispatch()
-{
+function api_SEARCH_GET_dispatch() {
     global $path;
 
     if (count($path) != 1) {
-        throw new BadRequestException([$path]);
+        throw new BadRequestException([ $path ]);
     }
 
     if (!getPermission("LIST", getCurrentScope())) {
         $response = [
-            'status' => ['code' => 401],
-            'error' => ['message' => 'Underprivileged API Key.'],
-            'trace' => getCurrentScope()
+            'status' => [ 'code' => 401 ],
+            'error'  => [ 'message' => 'Underprivileged API Key.' ],
+            'trace'  => getCurrentScope()
         ];
         throw new BadRequestException($response);
     }
@@ -256,10 +260,10 @@ function api_SEARCH_GET_dispatch()
                 'status' => [
                     'code' => 400
                 ],
-                'error' => [
+                'error'  => [
                     'message' => 'What are you doing?'
                 ],
-                'trace' => [
+                'trace'  => [
                     $path
                 ]
             ];
@@ -271,40 +275,40 @@ function api_SEARCH_GET_dispatch()
     /** @noinspection PhpUndefinedVariableInspection */
     if (strpos($criteria, ":") === False) {
         $response = [
-            'status' => ['code' => 401],
-            'error' => ['message' => 'Invalid Search Request']
+            'status' => [ 'code' => 401 ],
+            'error'  => [ 'message' => 'Invalid Search Request' ]
         ];
         throw new BadRequestException($response);
     }
 
-    list($criteria,$value) = explode(':', $criteria);
+    list($criteria, $value) = explode(':', $criteria);
 
     $validCriteria = [
         'phone' => [
-            'filter' => FILTER_VALIDATE_INT,
+            'filter'   => FILTER_VALIDATE_INT,
             'sqlField' => 'phonenumber',
-            'sqlType' => 'i'
+            'sqlType'  => 'i'
         ],
         'email' => [
-            'filter' => FILTER_VALIDATE_EMAIL,
+            'filter'   => FILTER_VALIDATE_EMAIL,
             'sqlField' => 'emailaddress',
-            'sqlType' => 's'
+            'sqlType'  => 's'
         ]
     ];
 
     if (!key_exists($criteria, $validCriteria)) {
         $response = [
-            'status' => ['code' => 401],
-            'error' => ['message' => 'Invalid Search Request']
+            'status' => [ 'code' => 401 ],
+            'error'  => [ 'message' => 'Invalid Search Request' ]
         ];
         throw new BadRequestException($response);
     }
 
-    $filter = $validCriteria[$criteria]['filter'];
-    $options = isset($validCriteria[$criteria]['options']) ? $validCriteria[$criteria]['options'] : [];
+    $filter  = $validCriteria[ $criteria ]['filter'];
+    $options = isset($validCriteria[ $criteria ]['options']) ? $validCriteria[ $criteria ]['options'] : [ ];
 
     if (!filter_var($value, $filter, $options)) {
-        throw new BadRequestException(["Criteria `{$criteria}`: Invalid value."]);
+        throw new BadRequestException([ "Criteria `{$criteria}`: Invalid value." ]);
     }
 
     $eventColumns = [
@@ -312,8 +316,8 @@ function api_SEARCH_GET_dispatch()
         'created'
     ];
 
-    $columnsToSelect = [];
-    $orderByColumns = [];
+    $columnsToSelect = [ ];
+    $orderByColumns  = [ ];
 
     if (count($requestQuery) > 0) {
 
@@ -323,7 +327,7 @@ function api_SEARCH_GET_dispatch()
             $columns = explode(',', $requestQuery['select'] . ',');
 
             // Only include valid columns.
-            $columnsToSelect = array_intersect($columns,$eventColumns);
+            $columnsToSelect = array_intersect($columns, $eventColumns);
         }
 
         if (key_exists('order', $requestQuery)) {
@@ -338,9 +342,10 @@ function api_SEARCH_GET_dispatch()
                 // Did they give us a column name only, or a column name and direction?
                 if (strstr($column, ' ') !== FALSE) {
                     list($columnName, $direction) = explode(' ', $column);
-                } else {
+                }
+                else {
                     $columnName = $column;
-                    $direction = '';
+                    $direction  = '';
                 }
 
                 // Is it a valid column? Drop it if not.
@@ -355,7 +360,8 @@ function api_SEARCH_GET_dispatch()
                             break;
                     }
                     $orderByColumns[] = $columnName . " " . $direction;
-                } else {
+                }
+                else {
                     // Intentionally dropping this invalid entry.
                 }
             }
@@ -375,27 +381,28 @@ function api_SEARCH_GET_dispatch()
 
     $scope = getCurrentScope();
 
-    $whereCriteria = [];
+    $whereCriteria = [ ];
 
     // Yes, we're intentionally replacing the criteria with a more specific one if applicable.
     if ($scope['product'] != "*") {
-        $whereCriteria[] = "segmentkey IN (SELECT segmentkey FROM tbl__segments WHERE productkey=" .$scope['product'] . ")";
+        $whereCriteria[] = "segmentkey IN (SELECT segmentkey FROM tbl__segments WHERE productkey=" . $scope['product'] . ")";
     }
     if ($scope['segment'] != "*") {
         $whereCriteria[] = "segmentkey=" . $scope['segment'];
     }
 
-    $whereCriteria[] = $validCriteria[$criteria]['sqlField'] . '=?';
+    $whereCriteria[] = $validCriteria[ $criteria ]['sqlField'] . '=?';
 
     // By default, select nothing.
     if (count($whereCriteria) == 0) {
         $whereClause = 'FALSE';
-    } else {
+    }
+    else {
         $whereClause = join("\n        AND ", $whereCriteria);
     }
 
     $begin = 0;
-    $end = 10;
+    $end   = 10;
 
     $sqlQuery = <<<EOF
 
@@ -411,27 +418,26 @@ function api_SEARCH_GET_dispatch()
 EOF;
 
     try {
-        $rows = $database->select($sqlQuery, [ [$validCriteria[$criteria]['sqlType'] => $value] ]);
+        $rows = $database->select($sqlQuery, [ [ $validCriteria[ $criteria ]['sqlType'] => $value ] ]);
     } catch (DatabaseNothingSelectedException $e) {
         // No rows is OK. Eat exception.
-        $rows = [];
+        $rows = [ ];
     }
 
     $response = [
         'status' => [
-            'code' => 200,
+            'code'    => 200,
             'message' => 'OK'
         ],
-        'data' => [
+        'data'   => [
             'count' => count($rows),
-            'rows' => $rows
+            'rows'  => $rows
         ],
     ];
     sendResponse($response);
 }
 
-function api_EVENTS_GET_dispatch()
-{
+function api_EVENTS_GET_dispatch() {
     //global $database;
     global $path;
     global $requestQuery;
@@ -453,10 +459,10 @@ function api_EVENTS_GET_dispatch()
                 'status' => [
                     'code' => 400
                 ],
-                'error' => [
+                'error'  => [
                     'message' => 'What are you doing?'
                 ],
-                'trace' => [
+                'trace'  => [
                     $path
                 ]
             ];
@@ -466,7 +472,7 @@ function api_EVENTS_GET_dispatch()
 
     $funcCall = str_replace("_dispatch", "", __FUNCTION__);
     if (isset($session) && strlen($session) > 0) {
-        $funcCall = $funcCall . '_ID';
+        $funcCall  = $funcCall . '_ID';
         $parameter = $session;
         if (isset($object2) && strlen($object2) > 0) {
             $funcCall = $funcCall . '_' . strtoupper($object2);
@@ -482,13 +488,15 @@ function api_EVENTS_GET_dispatch()
             $funcCall = (string)$funcCall;
             if (isset($parameter)) {
                 $funcCall($parameter);
-            } else {
+            }
+            else {
                 $funcCall();
             }
-        } else {
+        }
+        else {
             $response = [
-                'status' => ['code' => 400],
-                'error' => ['message' => 'Not supported:' . $funcCall ]
+                'status' => [ 'code' => 400 ],
+                'error'  => [ 'message' => 'Not supported:' . $funcCall ]
             ];
             throw new BadRequestException($response);
         }
@@ -496,8 +504,8 @@ function api_EVENTS_GET_dispatch()
 
     if (!getPermission("LIST", getCurrentScope())) {
         $response = [
-            'status' => ['code' => 401],
-            'error' => ['message' => 'Underprivileged API Key.']
+            'status' => [ 'code' => 401 ],
+            'error'  => [ 'message' => 'Underprivileged API Key.' ]
         ];
         throw new BadRequestException($response);
     }
@@ -513,8 +521,8 @@ function api_EVENTS_GET_dispatch()
         'state'
     ];
 
-    $columnsToSelect = [];
-    $orderByColumns = [];
+    $columnsToSelect = [ ];
+    $orderByColumns  = [ ];
 
     if (count($requestQuery) > 0) {
 
@@ -524,7 +532,7 @@ function api_EVENTS_GET_dispatch()
             $columns = explode(',', $requestQuery['select'] . ',');
 
             // Only include valid columns.
-            $columnsToSelect = array_intersect($columns,$eventColumns);
+            $columnsToSelect = array_intersect($columns, $eventColumns);
         }
 
         if (key_exists('order', $requestQuery)) {
@@ -539,9 +547,10 @@ function api_EVENTS_GET_dispatch()
                 // Did they give us a column name only, or a column name and direction?
                 if (strstr($column, ' ') !== FALSE) {
                     list($columnName, $direction) = explode(' ', $column);
-                } else {
+                }
+                else {
                     $columnName = $column;
-                    $direction = '';
+                    $direction  = '';
                 }
 
                 // Is it a valid column? Drop it if not.
@@ -556,7 +565,8 @@ function api_EVENTS_GET_dispatch()
                             break;
                     }
                     $orderByColumns[] = $columnName . " " . $direction;
-                } else {
+                }
+                else {
                     // Intentionally dropping this invalid entry.
                 }
             }
@@ -581,7 +591,7 @@ function api_EVENTS_GET_dispatch()
 
     // Yes, we're intentionally replacing the criteria with a more specific one if applicable.
     if ($scope['product'] != "*") {
-        $whereClause = "segmentkey IN (SELECT segmentkey FROM tbl__segments WHERE productkey=" .$scope['product'] . ")";
+        $whereClause = "segmentkey IN (SELECT segmentkey FROM tbl__segments WHERE productkey=" . $scope['product'] . ")";
     }
     if ($scope['segment'] != "*") {
         $whereClause = "segmentkey=" . $scope['segment'];
@@ -591,7 +601,7 @@ function api_EVENTS_GET_dispatch()
     }
 
     $begin = 0;
-    $end = 10;
+    $end   = 10;
 
     $sqlQuery = <<<EOF
             
@@ -610,17 +620,17 @@ EOF;
         $rows = $database->select($sqlQuery);
     } catch (DatabaseNothingSelectedException $e) {
         // No rows is OK. Eat exception.
-        $rows = [];
+        $rows = [ ];
     }
 
     $response = [
         'status' => [
-            'code' => 200,
+            'code'    => 200,
             'message' => 'OK'
         ],
-        'data' => [
+        'data'   => [
             'count' => count($rows),
-            'rows' => $rows
+            'rows'  => $rows
         ],
     ];
     sendResponse($response);
@@ -631,9 +641,9 @@ function api_EVENTS_GET_ID() {
 
     if (!getPermission("LIST", getCurrentScope())) {
         $response = [
-            'status' => ['code' => 401],
-            'error' => ['message' => 'Underprivileged API Key.'],
-            'trace' => getCurrentScope()
+            'status' => [ 'code' => 401 ],
+            'error'  => [ 'message' => 'Underprivileged API Key.' ],
+            'trace'  => getCurrentScope()
         ];
         throw new BadRequestException($response);
     }
@@ -652,10 +662,10 @@ function api_EVENTS_GET_ID() {
                 'status' => [
                     'code' => 400
                 ],
-                'error' => [
+                'error'  => [
                     'message' => 'What are you doing?'
                 ],
-                'trace' => [
+                'trace'  => [
                     $path
                 ]
             ];
@@ -686,10 +696,10 @@ function api_EVENTS_GET_ID() {
 EOF;
 
     try {
-        $rows = $database->select($sqlQuery, [ [ 's' => $session] ]);
+        $rows = $database->select($sqlQuery, [ [ 's' => $session ] ]);
     } catch (DatabaseNothingSelectedException $e) {
         // No rows is OK. Eat exception.
-        $rows = [];
+        $rows = [ ];
     }
 
     if (count($rows) > 0) {
@@ -708,10 +718,10 @@ EOF;
 EOF;
 
         try {
-            $files = $database->select($sqlQuery, [['i' => $rows[0]['eventkey']]]);
+            $files = $database->select($sqlQuery, [ [ 'i' => $rows[0]['eventkey'] ] ]);
         } catch (DatabaseNothingSelectedException $e) {
             // No rows is OK. Eat exception.
-            $files = [];
+            $files = [ ];
         }
 
         $rows[0]['files'] = $files;
@@ -721,19 +731,18 @@ EOF;
 
     $response = [
         'status' => [
-            'code' => 200,
+            'code'    => 200,
             'message' => 'OK'
         ],
-        'data' => [
+        'data'   => [
             'count' => count($rows),
-            'rows' => $rows
+            'rows'  => $rows
         ],
     ];
     sendResponse($response);
 }
 
-function api_EVENTS_GET_ID_ATTACHMENTS_ID()
-{
+function api_EVENTS_GET_ID_ATTACHMENTS_ID() {
     global $path;
     global $database;
     $session = $path[0];
@@ -759,14 +768,14 @@ function api_EVENTS_GET_ID_ATTACHMENTS_ID()
 EOF;
 
     try {
-        $file = $database->select($sqlQuery, []); //  [ [ 's' => $session ], [ 'i' => $path[2] ] ]
+        $file = $database->select($sqlQuery, [ ]); //  [ [ 's' => $session ], [ 'i' => $path[2] ] ]
     } catch (DatabaseNothingSelectedException $e) {
         $response = [
             'status' => [
-                'code' => 404,
+                'code'    => 404,
                 'message' => 'Not Found'
             ],
-            'error' => [
+            'error'  => [
                 'message' => 'That attachment is not found.',
             ],
         ];
@@ -776,20 +785,21 @@ EOF;
     if (!file_exists($file[0]['filepath'])) {
         $response = [
             'status' => [
-                'code' => 503,
+                'code'    => 503,
                 'message' => 'Temporarily Not Available'
             ],
-            'error' => [
+            'error'  => [
                 'message' => 'The requested attachment cannot be provided right now.',
             ],
         ];
         throw new BadRequestException($response);
-    } else {
-//        header('X-Sendfile: ' . $file[0]['filepath']);
+    }
+    else {
+        //        header('X-Sendfile: ' . $file[0]['filepath']);
 
         header('Content-Description: File Transfer');
         header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename='.basename($file[0]['filename']));
+        header('Content-Disposition: attachment; filename=' . basename($file[0]['filename']));
         header('Content-Transfer-Encoding: binary');
         header('Expires: 0');
         header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
@@ -805,13 +815,11 @@ EOF;
 }
 
 
-function api_EVENTS_PUT_ID($id)
-{
+function api_EVENTS_PUT_ID($id) {
 
 }
 
-function api_EVENTS_POST_dispatch()
-{
+function api_EVENTS_POST_dispatch() {
     global $database;
     global $path;
     global $apiKey;
@@ -822,10 +830,10 @@ function api_EVENTS_POST_dispatch()
             if ($path[2] != "") {
                 $response = [
                     'status' => [
-                        'code' => 400,
+                        'code'    => 400,
                         'message' => 'Bad Request'
                     ],
-                    'error' => [
+                    'error'  => [
                         'message' => 'Invalid Request Path',
                     ],
                 ];
@@ -835,16 +843,16 @@ function api_EVENTS_POST_dispatch()
             $object2 = $path[1];
         case 1:
             $session = $path[0];
-            break;  
+            break;
         case 0:
             break;
         default:
             $response = [
                 'status' => [
-                    'code' => 400,
+                    'code'    => 400,
                     'message' => 'Bad Request'
                 ],
-                'error' => [
+                'error'  => [
                     'message' => 'Invalid Request Path',
                 ],
             ];
@@ -855,7 +863,7 @@ function api_EVENTS_POST_dispatch()
 
     $funcCall = str_replace("_dispatch", "", __FUNCTION__);
     if (isset($session) && strlen($session) > 0) {
-        $funcCall = $funcCall . '_ID';
+        $funcCall  = $funcCall . '_ID';
         $parameter = $session;
         if (isset($object2) && strlen($object2) > 0) {
             $funcCall = $funcCall . '_' . strtoupper($object2);
@@ -868,33 +876,36 @@ function api_EVENTS_POST_dispatch()
             $funcCall = (string)$funcCall;
             if (isset($parameter)) {
                 $funcCall($parameter);
-            } else {
+            }
+            else {
                 $funcCall();
             }
-        } else {
+        }
+        else {
             $response = [
                 'status' => [
-                    'code' => 400,
+                    'code'    => 400,
                     'message' => 'Bad Request'
                 ],
-                'error' => [
+                'error'  => [
                     'message' => 'Unsupported API Request.',
                 ],
             ];
             throw new BadRequestException($response);
         }
-    } else {
+    }
+    else {
         try {
             if (!$jsonRequest = json_decode($_POST['request'], true)) {
-                throw new InvalidJsonException([$jsonRequest]);
+                throw new InvalidJsonException([ $jsonRequest ]);
             }
 
             $requiredFields = [
-                'segment' => [
+                'segment'      => [
                     'filter' => FILTER_VALIDATE_INT,
                 ],
-                'phoneNumber' => [
-                    'filter' => FILTER_VALIDATE_REGEXP,
+                'phoneNumber'  => [
+                    'filter'  => FILTER_VALIDATE_REGEXP,
                     'options' => [
                         'options' => [
                             'regexp' => "/^\+? ?[0-9 ]+$/"
@@ -904,33 +915,33 @@ function api_EVENTS_POST_dispatch()
                 'emailAddress' => [
                     'filter' => FILTER_VALIDATE_EMAIL,
                 ],
-                'state' => [
-                    'filter' => FILTER_VALIDATE_REGEXP,
+                'state'        => [
+                    'filter'  => FILTER_VALIDATE_REGEXP,
                     'options' => [
                         'options' => [
                             'regexp' => "/^[A-Za-z ]{4,50}$/"
                         ]
                     ]
                 ],
-                'latitude' => [
+                'latitude'     => [
                     'filter' => FILTER_VALIDATE_FLOAT,
                 ],
-                'longitude' => [
+                'longitude'    => [
                     'filter' => FILTER_VALIDATE_FLOAT,
                 ]
             ];
 
             foreach ($requiredFields as $key => $parameters) {
-                if (!isset($jsonRequest[$key])) {
-                    throw new BadRequestException(["Required parameter `{$key}` is missing."]);
+                if (!isset($jsonRequest[ $key ])) {
+                    throw new BadRequestException([ "Required parameter `{$key}` is missing." ]);
                 }
 
-                $value = $jsonRequest[$key];
-                $filter = $parameters['filter'];
-                $options = isset($parameters['options']) ? $parameters['options'] : [];
+                $value   = $jsonRequest[ $key ];
+                $filter  = $parameters['filter'];
+                $options = isset($parameters['options']) ? $parameters['options'] : [ ];
 
                 if (!filter_var($value, $filter, $options)) {
-                    throw new BadRequestException(["Parameter `{$key}`: Invalid value."]);
+                    throw new BadRequestException([ "Parameter `{$key}`: Invalid value." ]);
                 }
             }
 
@@ -949,24 +960,24 @@ function api_EVENTS_POST_dispatch()
         
 EOF;
 
-            $sessionId = null;
+            $sessionId  = null;
             $eventQuery = null;
             $eventAdded = false;
-            $attempts = 1;
-            $i = 0;
-            $lastError = null;
+            $attempts   = 1;
+            $i          = 0;
+            $lastError  = null;
 
             do {
                 try {
                     $sessionId = generateSessionId();
 
                     $eventQuery = $database->insert($sqlQuery, [
-                            ['s' => $sessionId],
-                            ['i' => $jsonRequest['segment']],
-                            ['s' => $jsonRequest['phoneNumber']],
-                            ['s' => $jsonRequest['emailAddress']],
-                            ['d' => $jsonRequest['latitude']],
-                            ['d' => $jsonRequest['longitude']]
+                            [ 's' => $sessionId ],
+                            [ 'i' => $jsonRequest['segment'] ],
+                            [ 's' => $jsonRequest['phoneNumber'] ],
+                            [ 's' => $jsonRequest['emailAddress'] ],
+                            [ 'd' => $jsonRequest['latitude'] ],
+                            [ 'd' => $jsonRequest['longitude'] ]
                         ]
                     );
 
@@ -980,7 +991,7 @@ EOF;
             } while (!$eventAdded AND $i <= $attempts);
 
             if (!$eventAdded) {
-                throw new EventNotAddedException([$lastError]);
+                throw new EventNotAddedException([ $lastError ]);
             }
 
 
@@ -1009,11 +1020,11 @@ EOF;
                 
 EOF;
 
-            $apiKey = null;
-            $scopeKey = (int)$eventQuery->insert_id;
+            $apiKey      = null;
+            $scopeKey    = (int)$eventQuery->insert_id;
             $apiKeyAdded = false;
-            $attempts = 1;
-            $i = 0;
+            $attempts    = 1;
+            $i           = 0;
 
             $apiKeyQuery = null;
             do {
@@ -1021,8 +1032,8 @@ EOF;
                     $apiKey = generateApiKey($sessionId);
 
                     $apiKeyQuery = $database->insert($sqlQuery, [
-                            ['s' => $apiKey],
-                            ['i' => $scopeKey]
+                            [ 's' => $apiKey ],
+                            [ 'i' => $scopeKey ]
                         ]
                     );
 
@@ -1036,17 +1047,17 @@ EOF;
             } while (!$apiKeyAdded AND $i <= $attempts);
 
             if (!$apiKeyAdded) {
-                throw new ApiKeyNotAddedException([$lastError]);
+                throw new ApiKeyNotAddedException([ $lastError ]);
             }
 
             $eventQuery->close();
             $apiKeyQuery->close();
 
             $response = [
-                'data' => [
+                'data'   => [
                     'session' => $sessionId,
-                    'dial' => "+1 407 934 7639",
-                    'apiKey' => $apiKey
+                    'dial'    => "+1 407 934 7639",
+                    'apiKey'  => $apiKey
                 ],
                 'status' => [
                     'code' => 201
@@ -1060,8 +1071,7 @@ EOF;
 
 }
 
-function api_EVENTS_POST_ID_ATTACHMENTS($id)
-{
+function api_EVENTS_POST_ID_ATTACHMENTS($id) {
     global $database;
 
     if (!isset($id) || strlen($id) != 8) {
@@ -1077,7 +1087,7 @@ function api_EVENTS_POST_ID_ATTACHMENTS($id)
     }
 
     $status = [
-        'data' => [],
+        'data'  => [ ],
         'error' => [
             'count' => 0
         ]
@@ -1095,9 +1105,9 @@ function api_EVENTS_POST_ID_ATTACHMENTS($id)
 
 EOF;
 
-    $sessionkey = $database->select($sqlQuery, [["s" => $id]])[0]['eventkey'];
+    $sessionkey = $database->select($sqlQuery, [ [ "s" => $id ] ])[0]['eventkey'];
 
-    $pattern = '/' . str_replace('\\', '\\\\', $_SERVER['DOCUMENT_ROOT']). '\/(.+)(?=\\\\.+\.php$)/';
+    $pattern = '/' . str_replace('\\', '\\\\', $_SERVER['DOCUMENT_ROOT']) . '\/(.+)(?=\\\\.+\.php$)/';
     preg_match($pattern, $_SERVER['SCRIPT_FILENAME'], $matches);
 
     // $baseDir = $matches[1];
@@ -1105,17 +1115,19 @@ EOF;
 
     $i = 0;
     foreach ($_FILES as $file) {
-        $status['data']['files'][$i]['trace'] = $file;
+        $status['data']['files'][ $i ]['trace'] = $file;
 
         if ($file['error'] > 0) {
-            $status['data']['files'][$i]['error'] = $file['error'];
+            $status['data']['files'][ $i ]['error'] = $file['error'];
             $status['error']['count']++;
-        } else {
+        }
+        else {
             $destination = $baseDir . DIRECTORY_SEPARATOR . 'up' . DIRECTORY_SEPARATOR . $id . '_' . $file['name'];
             if (!move_uploaded_file($file['tmp_name'], $destination)) {
-                $status['data']['files'][$i]['error'] = "Failed to move `{$file['tmp_name']}` to `{$destination}`";
+                $status['data']['files'][ $i ]['error'] = "Failed to move `{$file['tmp_name']}` to `{$destination}`";
                 $status['error']['count']++;
-            } else {
+            }
+            else {
                 $sqlQuery = <<<EOF
 
                     INSERT INTO
@@ -1130,12 +1142,12 @@ EOF;
 
 EOF;
                 $database->insert($sqlQuery, [
-                    ['i' => $sessionkey],
-                    ['s' => $file['name']],
-                    ['s' => $destination]
+                    [ 'i' => $sessionkey ],
+                    [ 's' => $file['name'] ],
+                    [ 's' => $destination ]
                 ]);
                 //chmod($destination, 0644);
-                $status['data']['files'][$i]['path'] = $destination;
+                $status['data']['files'][ $i ]['path'] = $destination;
             }
         }
         $i++;
@@ -1144,10 +1156,12 @@ EOF;
     if ($status['error']['count'] == 0) {
         // Everything Worked
         $status['status']['code'] = 200;
-    } elseif ($status['error']['count'] == count($status['data']['files'])) {
+    }
+    elseif ($status['error']['count'] == count($status['data']['files'])) {
         // Everything failed.
         $status['status']['code'] = 500;
-    } else {
+    }
+    else {
         // Mixed Results
         $status['status']['code'] = 207;
     }
@@ -1169,9 +1183,9 @@ EOF;
 EOF;
 
             try {
-//                $eventQuery =
-                    $database->update($sqlQuery, [
-                        ['s' => $id]
+                //                $eventQuery =
+                $database->update($sqlQuery, [
+                        [ 's' => $id ]
                     ]
                 );
             } catch (DatabaseInsertQueryFailedException $e) {
@@ -1185,27 +1199,25 @@ EOF;
     sendResponse($status);
 }
 
-function generateSessionId()
-{
+function generateSessionId() {
     return strtoupper(substr(str_shuffle(str_repeat("aeufhlmr145670", 8)), 0, 8));
 }
 
-function generateApiKey($sessionId)
-{
+function generateApiKey($sessionId) {
     return sha1($sessionId . microtime(true) . mt_rand(10000, 90000));
 }
 
-function sendResponse($response, $exitAfter = true)
-{
+function sendResponse($response, $exitAfter = true) {
 
     if ($response instanceof LeagleEyeException) {
         $base = $response->getResponse();
-    } else {
+    }
+    else {
         $base = $response;
     }
 
     if (!isset($base['status'])) {
-        $base['status'] = ['code' => null, 'message' => ''];
+        $base['status'] = [ 'code' => null, 'message' => '' ];
     }
 
     //$status = &$base['status'];
@@ -1225,7 +1237,7 @@ function sendResponse($response, $exitAfter = true)
                 $base['status']['message'] = "Internal Server Error";
                 break;
             case null:
-                $base['status']['code'] = 500;
+                $base['status']['code']    = 500;
                 $base['status']['message'] = "No Status Provided";
                 break;
         }
@@ -1239,8 +1251,7 @@ function sendResponse($response, $exitAfter = true)
     }
 }
 
-function getPermission($action, $compare = array())
-{
+function getPermission($action, $compare = array()) {
     global $scope;
     global $permissions;
 
@@ -1248,22 +1259,22 @@ function getPermission($action, $compare = array())
         return false;
     }
 
-    foreach (array("event", "product", "segment") as $attribute) {
-        if (!fnmatch($scope[$attribute], $compare[$attribute])) {
+    foreach (array( "event", "product", "segment" ) as $attribute) {
+        if (!fnmatch($scope[ $attribute ], $compare[ $attribute ])) {
             return false;
         }
     }
 
     $key = strtoupper("allow_" . $action);
-    if (!isset($permissions[$key])) {
+    if (!isset($permissions[ $key ])) {
         return false;
-    } else {
-        return ($permissions[$key] == 1);
+    }
+    else {
+        return ($permissions[ $key ] == 1);
     }
 }
 
-function getScopeByEventSession($event)
-{
+function getScopeByEventSession($event) {
     global $database;
 
     $sqlQuery = <<<EOF
@@ -1283,10 +1294,11 @@ function getScopeByEventSession($event)
 EOF;
 
     // By virtue of LIMIT 1 this can only ever have a single row, so send back the zeroth element.
-    return $database->select($sqlQuery, [['s' => $event]])[0];
+    return $database->select($sqlQuery, [ [ 's' => $event ] ])[0];
 }
 
 function getCurrentScope() {
     global $scope;
+
     return $scope;
 }                
