@@ -1184,7 +1184,8 @@ EOF;
         else {
             $destination = $baseDir . DIRECTORY_SEPARATOR . 'up' . DIRECTORY_SEPARATOR . $id . '_' . $file['name'];
             if (!move_uploaded_file($file['tmp_name'], $destination)) {
-                $status['data']['files'][ $i ]['error'] = "Failed to move `{$file['tmp_name']}` to `{$destination}`";
+                $status['data']['files'][ $i ]['error'] = "Failed to move 
+                `{$file['tmp_name']}` to permanent storage.";
                 $status['error']['count']++;
             }
             else {
