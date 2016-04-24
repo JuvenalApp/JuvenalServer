@@ -998,6 +998,8 @@ EOF;
                 stream_context_create
                 ($options));
 
+            var_dump($dialbackNumber);
+
             if ($dialbackNumber === FALSE) { /* Handle error */
                 throw new NoDialbackNumberProvidedException([]);
             }
@@ -1038,7 +1040,7 @@ EOF;
                             [ 'd' => $jsonRequest['latitude'] ],
                             [ 'd' => $jsonRequest['longitude'] ],
                             [ 's' => $jsonRequest['state'] ],
-                            [ 'i' => $dialbackNumber ]
+                            [ 'i' => (int)$dialbackNumber ]
                         ]
                     );
 
