@@ -407,8 +407,6 @@ function api_SEARCH_GET_dispatch() {
 
     $whereCriteria = [ ];
 
-    var_dump($scope);
-
     // Yes, we're intentionally replacing the criteria with a more specific one if applicable.
     if ($scope['product'] != "*") {
         $whereCriteria[] = "segmentkey IN (SELECT segmentkey FROM tbl__segments WHERE productkey=" . $scope['product'] . ")";
@@ -416,8 +414,8 @@ function api_SEARCH_GET_dispatch() {
     if ($scope['segment'] != "*") {
         $whereCriteria[] = "segmentkey=" . $scope['segment'];
     }
-    if ($scope['session'] != "*") {
-        $whereCriteria[] = "session='" . $scope['session'] . "'";
+    if ($scope['event'] != "*") {
+        $whereCriteria[] = "session='" . $scope['event'] . "'";
     }
 
     $whereCriteria[] = $validCriteria[ $criteria ]['sqlField'] . '=?';
@@ -451,9 +449,6 @@ EOF;
         $rows = $database->select($sqlQuery, [ [ $validCriteria[ $criteria ]['sqlType'] => $value ] ]);
     } catch (DatabaseNothingSelectedException $e) {
         // No rows is OK. Eat exception.
-        var_dump($sqlQuery);
-        var_dump($validCriteria[ $criteria ]['sqlType']);
-        var_dump($value);
         $rows = [ ];
     }
 
