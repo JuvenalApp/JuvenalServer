@@ -992,8 +992,6 @@ EOF;
                 throw new NoDialbackNumberProvidedException();
             }
 
-            $dialbackQuery->close();
-
             $sqlQuery = <<<EOF
             
                 INSERT INTO
