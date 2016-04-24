@@ -880,6 +880,9 @@ function api_EVENTS_POST_dispatch() {
         }
     }
 
+    var_dump(__FUNCTION__);
+    var_dump($funcCall);
+
     if ($funcCall != str_replace("_dispatch", "", __FUNCTION__)) {
         if (function_exists($funcCall)) {
             // Explicitly cast $action as a string to reassure the debugger.
