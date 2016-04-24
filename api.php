@@ -303,6 +303,16 @@ function api_SEARCH_GET_dispatch() {
             'sqlField' => 'phonenumber',
             'sqlType'  => 'i'
         ],
+        'dialback' => [
+            'filter'  => FILTER_VALIDATE_REGEXP,
+            'options' => [
+                'options' => [
+                    'regexp' => "/^[0-9]+$/"
+                ]
+            ],
+            'sqlField' => 'dialbacknumber',
+            'sqlType'  => 'i'
+        ],
         'email' => [
             'filter'   => FILTER_VALIDATE_EMAIL,
             'sqlField' => 'emailaddress',
@@ -415,6 +425,7 @@ function api_SEARCH_GET_dispatch() {
         $whereClause = join("\n        AND ", $whereCriteria);
     }
 
+    // @todo Un-hardcode these.
     $begin = 0;
     $end   = 10;
 
