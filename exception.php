@@ -10,7 +10,6 @@ class LeagleEyeException extends Exception
         if (!is_null($previous)) {
             $this->e['previous'] = $previous;
         }
-        //parent::__construct($message['error'], $code, $previous);
     }
 
     public function getResponse() {
@@ -154,6 +153,13 @@ class DatabaseInvalidQueryTypeException extends Http500Exception {
     }
 }
 
+class NoDialbackNumberProvidedException extends Http500Exception {
+    function __construct(array $trace, $previous = null) {
+        parent::__construct(__CLASS__, $trace, $previous);
+    }
+}
+
+
 class BadRequestException extends Http400Exception {
     function __construct(array $trace = [], $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
@@ -190,6 +196,11 @@ class ApiKeyNotPrivilegedException extends Http401Exception{
     }
 }
 
+/**
+ * Class WhatTheHeckIsThisException
+ *
+ * This should be impossible to reach as it's mostly used for in-code sanity
+ * checks. It might be possible to get here by sending garbage, in case they
+ * deserve whatever useless error message they get.
+ */
 class WhatTheHeckIsThisException extends LeagleEyeException { }
-
-?>

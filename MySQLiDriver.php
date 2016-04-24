@@ -105,6 +105,8 @@ class MySQLiDriver
             throw new DatabaseStatementNotPreparedException([$sqlQuery, $query]);
         }
 
+        $boundParameters = [];
+
         if (!is_null($parameters)) {
 
             $bind           = [];
@@ -133,7 +135,8 @@ class MySQLiDriver
                 }
             }
 
-            // Can't use foreach because the memory address for the AS variable changes and so all parameters get the same value.
+            // Can't use foreach because the memory address for the AS
+            // variable changes and so all parameters get the same value.
             for ($i = 0; $i < count($bind); $i++) {
                 $boundParameters[] =  &$bind[ $i ];
             }
@@ -145,14 +148,12 @@ class MySQLiDriver
 
         $query->execute();
 
-//        error_log('$query: ' . print_r($query,true));
-//        error_log('$this->mysqli: ' . print_r($this->mysqli,true));
-
         $tempQuery = $query;
         $tempMysqli = $this->mysqli;
 
-        $errorData = ['sqlQuery' => $sqlQuery, 'parameters' => $parameters, 'query' => $tempQuery, 'boundParameters' =>
-            $boundParameters, 'mysqli' => $tempMysqli];
+        $errorData = ['sqlQuery' => $sqlQuery, 'parameters' => $parameters,
+                      'query' => $tempQuery, 'boundParameters' =>
+                          $boundParameters, 'mysqli' => $tempMysqli];
 
         if ($query->errno > 0 OR $query->affected_rows < 0) {
             throw new DatabaseInsertQueryFailedException($errorData);
@@ -163,13 +164,11 @@ class MySQLiDriver
         }
 
         return $query;
-        //$query->close();
-
     }
 
     function update($sqlQuery, $parameters = null) {
         if (substr(strtoupper(trim($sqlQuery)), 0, 6) != 'UPDATE') {
-            throw new DatabaseInvalidQueryTypeException(['insert' , $sqlQuery]);
+            throw new DatabaseInvalidQueryTypeException(['update' , $sqlQuery]);
         }
 
         global $SQL_PREFIX;
@@ -179,6 +178,8 @@ class MySQLiDriver
         if (!$query = $this->mysqli->prepare($sqlQuery)) {
             throw new DatabaseStatementNotPreparedException([$sqlQuery, $query]);
         }
+
+        $boundParameters = [];
 
         if (!is_null($parameters)) {
 
@@ -208,7 +209,8 @@ class MySQLiDriver
                 }
             }
 
-            // Can't use foreach because the memory address for the AS variable changes and so all parameters get the same value.
+            // Can't use foreach because the memory address for the AS
+            // variable changes and so all parameters get the same value.
             for ($i = 0; $i < count($bind); $i++) {
                 $boundParameters[] =  &$bind[ $i ];
             }
@@ -220,10 +222,9 @@ class MySQLiDriver
 
         $query->execute();
 
-        //error_log('$query: ' . print_r($query,true));
-        //error_log('$this->mysqli: ' . print_r($this->mysqli,true));
-
-        $errorData = ['sqlQuery' => $sqlQuery, 'parameters' => $parameters, 'query' => $query, 'boundParameters' => $boundParameters, 'mysqli' => $this->mysqli];
+        $errorData = ['sqlQuery' => $sqlQuery, 'parameters' => $parameters,
+                      'query' => $query, 'boundParameters' =>
+                          $boundParameters, 'mysqli' => $this->mysqli];
 
         if ($query->errno > 0 OR $query->affected_rows < 0) {
             throw new DatabaseUpdateQueryFailedException($errorData);
@@ -234,7 +235,6 @@ class MySQLiDriver
         }
 
         return $query;
-        //$query->close();
 
     }
 
