@@ -1132,7 +1132,6 @@ EOF;
 
 function api_EVENTS_POST_ID_ATTACHMENTS($id) {
     global $database;
-    var_dump($id);
 
     if (!isset($id) || strlen($id) != 8) {
         throw new InvalidIdentifierException();
@@ -1314,6 +1313,8 @@ function sendResponse($response, $exitAfter = true) {
 function getPermission($action, $compare = array()) {
     global $scope;
     global $permissions;
+
+    var_dump($scope);
 
     if (count($scope) == 0) {
         return false;
