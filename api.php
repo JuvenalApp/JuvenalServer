@@ -947,6 +947,58 @@ function api_EVENTS_POST_dispatch() {
 
             $sqlQuery = <<<EOF
             
+                SELECT
+                    productphoneserver
+                FROM
+                    dev__products
+                INNER JOIN
+                    tbl__segments
+                ON
+                    dev__products.productkey=dev__segments.productkey
+                WHERE
+                    dev__segments.segmentkey=?
+                
+EOF;
+
+            $dialbackQuery = $database->select($sqlQuery, [
+                    [ 'i' => $jsonRequest['segment'] ]
+                ]
+            );
+
+            $data = [
+                'emailaddress' => $jsonRequest['emailAddress'],
+                'phonenumber'  => $jsonRequest['phoneNumber'],
+                'latitude'     => $jsonRequest['latitude'],
+                'logitude'     => $jsonRequest['longitude'],
+                'state'        => $jsonRequest['state']
+            ];
+
+            // use key 'http' even if you send the request to https://...
+            $options = array(
+                'http' => array(
+                    'header'  => "Content-type: 
+                    application/x-www-form-urlencoded\r\n",
+                    'method'  => 'POST',
+                    'content' => http_build_query($data)
+                )
+            );
+
+            $result = file_get_contents
+            ($dialbackQuery[0]['productphoneserver'], false,
+                stream_context_create
+                ($options));
+
+            var_dump($dialbackQuery);
+            var_dump($result);
+            exit();
+
+            if ($result === FALSE) { /* Handle error */
+            }
+
+            $dialbackQuery->close();
+
+            $sqlQuery = <<<EOF
+            
                 INSERT INTO
                     tbl__events
                     (
@@ -955,7 +1007,8 @@ function api_EVENTS_POST_dispatch() {
                         phonenumber,
                         emailaddress,
                         latitude,
-                        longitude
+                        longitude,
+                        state
                     ) VALUES (?, ?, ?, ?, ?, ?)
         
 EOF;
@@ -977,7 +1030,8 @@ EOF;
                             [ 's' => $jsonRequest['phoneNumber'] ],
                             [ 's' => $jsonRequest['emailAddress'] ],
                             [ 'd' => $jsonRequest['latitude'] ],
-                            [ 'd' => $jsonRequest['longitude'] ]
+                            [ 'd' => $jsonRequest['longitude'] ],
+                            [ 's' => $jsonRequest['state'] ]
                         ]
                     );
 
@@ -1052,6 +1106,7 @@ EOF;
 
             $eventQuery->close();
             $apiKeyQuery->close();
+
 
             $response = [
                 'data'   => [
