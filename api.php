@@ -950,13 +950,13 @@ function api_EVENTS_POST_dispatch() {
                 SELECT
                     productphoneserver
                 FROM
-                    dev__products
+                    tbl__products
                 INNER JOIN
                     tbl__segments
                 ON
-                    dev__products.productkey=dev__segments.productkey
+                    tbl__products.productkey=tbl__segments.productkey
                 WHERE
-                    dev__segments.segmentkey=?
+                    tbl__segments.segmentkey=?
                 
 EOF;
 
@@ -988,7 +988,7 @@ EOF;
                 stream_context_create
                 ($options));
 
-            var_dump($dialbackQuery);
+            var_dump($dialbackQuery[0]['productphoneserver']);
             var_dump($result);
             exit();
 
