@@ -1233,6 +1233,8 @@ EOF;
  * Receives attachment(s), saves to disk, and adds to database. Renews API
  * key when file received.
  *
+ * @todo Move the upload location outside the webroot.
+ *
  * @param string $id Session ID provided by the dispatcher.
  *
  * @throws ApiKeyNotPrivilegedException
