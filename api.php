@@ -446,6 +446,7 @@ EOF;
         $rows = $database->select($sqlQuery, [ [ $validCriteria[ $criteria ]['sqlType'] => $value ] ]);
     } catch (DatabaseNothingSelectedException $e) {
         // No rows is OK. Eat exception.
+        var_dump($sqlQuery);
         $rows = [ ];
     }
 
