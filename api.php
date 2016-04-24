@@ -828,8 +828,6 @@ function api_EVENTS_POST_dispatch() {
     global $path;
     global $apiKey;
 
-    var_dump($path);
-
     switch (count($path)) {
         /** @noinspection PhpMissingBreakStatementInspection */
         case 3:
@@ -877,9 +875,6 @@ function api_EVENTS_POST_dispatch() {
             $funcCall = $funcCall . '_' . strtoupper($object2);
         }
     }
-
-    var_dump(__FUNCTION__);
-    var_dump($funcCall);
 
     if ($funcCall != str_replace("_dispatch", "", __FUNCTION__)) {
         if (function_exists($funcCall)) {
@@ -1136,6 +1131,7 @@ EOF;
 
 function api_EVENTS_POST_ID_ATTACHMENTS($id) {
     global $database;
+    var_dump($id);
 
     if (!isset($id) || strlen($id) != 8) {
         throw new InvalidIdentifierException();
