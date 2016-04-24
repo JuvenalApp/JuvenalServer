@@ -1175,7 +1175,7 @@ EOF;
 
     $i = 0;
     foreach ($_FILES as $file) {
-        $status['data']['files'][ $i ]['trace'] = $file;
+        // $status['data']['files'][ $i ]['trace'] = $file;
 
         if ($file['error'] > 0) {
             $status['data']['files'][ $i ]['error'] = $file['error'];
@@ -1207,7 +1207,7 @@ EOF;
                     [ 's' => $destination ]
                 ]);
                 //chmod($destination, 0644);
-                $status['data']['files'][ $i ]['path'] = $destination;
+                $status['data']['files'][ $i ]['name'] = $file['name'];
             }
         }
         $i++;
