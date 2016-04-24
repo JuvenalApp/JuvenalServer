@@ -526,7 +526,7 @@ function api_EVENTS_GET_dispatch() {
         'latitude',
         'longitude',
         'postal_code',
-        'returned_number',
+        'dialbacknumber',
         'state'
     ];
 
@@ -695,7 +695,7 @@ function api_EVENTS_GET_ID() {
             latitude,
             longitude,
             postal_code,
-            returned_number,
+            dialbacknumber,
             state
         FROM
             tbl__events
