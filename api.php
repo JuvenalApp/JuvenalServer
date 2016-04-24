@@ -832,6 +832,8 @@ function api_EVENTS_POST_dispatch() {
     global $path;
     global $apiKey;
 
+    var_dump($path);
+
     switch (count($path)) {
         /** @noinspection PhpMissingBreakStatementInspection */
         case 3:
@@ -870,9 +872,6 @@ function api_EVENTS_POST_dispatch() {
             break;
     }
 
-
-    var_dump(__FUNCTION__);
-    var_dump($funcCall);
 
     $funcCall = str_replace("_dispatch", "", __FUNCTION__);
     if (isset($session) && strlen($session) > 0) {
