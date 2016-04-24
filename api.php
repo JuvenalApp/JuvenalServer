@@ -294,7 +294,12 @@ function api_SEARCH_GET_dispatch() {
 
     $validCriteria = [
         'phone' => [
-            'filter'   => FILTER_VALIDATE_INT,
+            'filter'  => FILTER_VALIDATE_REGEXP,
+            'options' => [
+                'options' => [
+                    'regexp' => "/^[0-9]+$/"
+                ]
+            ]
             'sqlField' => 'phonenumber',
             'sqlType'  => 'i'
         ],
