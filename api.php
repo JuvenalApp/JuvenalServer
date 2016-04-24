@@ -407,6 +407,8 @@ function api_SEARCH_GET_dispatch() {
 
     $whereCriteria = [ ];
 
+    var_dump($scope);
+
     // Yes, we're intentionally replacing the criteria with a more specific one if applicable.
     if ($scope['product'] != "*") {
         $whereCriteria[] = "segmentkey IN (SELECT segmentkey FROM tbl__segments WHERE productkey=" . $scope['product'] . ")";
