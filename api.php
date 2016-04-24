@@ -871,6 +871,9 @@ function api_EVENTS_POST_dispatch() {
     }
 
 
+    var_dump(__FUNCTION__);
+    var_dump($funcCall);
+
     $funcCall = str_replace("_dispatch", "", __FUNCTION__);
     if (isset($session) && strlen($session) > 0) {
         $funcCall  = $funcCall . '_ID';
