@@ -414,6 +414,9 @@ function api_SEARCH_GET_dispatch() {
     if ($scope['segment'] != "*") {
         $whereCriteria[] = "segmentkey=" . $scope['segment'];
     }
+    if ($scope['session'] != "*") {
+        $whereCriteria[] = "session=" . $scope['session'];
+    }
 
     $whereCriteria[] = $validCriteria[ $criteria ]['sqlField'] . '=?';
 
