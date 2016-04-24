@@ -16,6 +16,7 @@ $database          = null;
 $path              = null;
 $scope             = null;
 $object            = null;
+$permissions       = null;
 
 // Accomodate local testing that can't go above webroot.
 // @todo Take this out of production code.
@@ -35,7 +36,7 @@ exit();
 
 function main() {
     global $API_PATH, $CONNECTION_STRING, $requestPath, $requestQuery,
-           $database, $path, $object, $scope;
+           $database, $path, $object, $scope, $permissions;
 
     // @todo This should probably be sanitized/validated against a whitelist like event creation and searching are.
     $method  = $_SERVER['REQUEST_METHOD'];
@@ -1313,8 +1314,6 @@ function sendResponse($response, $exitAfter = true) {
 function getPermission($action, $compare = array()) {
     global $scope;
     global $permissions;
-
-    var_dump($scope);
 
     if (count($scope) == 0) {
         return false;
