@@ -154,6 +154,13 @@ class DatabaseInvalidQueryTypeException extends Http500Exception {
     }
 }
 
+class NoDialbackNumberProvidedException extends Http500Exception {
+    function __construct(array $trace, $previous = null) {
+        parent::__construct(__CLASS__, $trace, $previous);
+    }
+}
+
+
 class BadRequestException extends Http400Exception {
     function __construct(array $trace = [], $previous = null) {
         parent::__construct(__CLASS__, $trace, $previous);
@@ -191,5 +198,3 @@ class ApiKeyNotPrivilegedException extends Http401Exception{
 }
 
 class WhatTheHeckIsThisException extends LeagleEyeException { }
-
-?>

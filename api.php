@@ -9,6 +9,7 @@ $SQL_PREFIX        = '';
 $CONNECTION_STRING = '';
 $requestPath       = '';
 $requestQuery      = [ ];
+/** @var MySQLiDriver $database */
 $database          = null;
 
 // Accomodate local testing that can't go above webroot.
@@ -443,7 +444,6 @@ EOF;
 }
 
 function api_EVENTS_GET_dispatch() {
-    //global $database;
     global $path;
     global $requestQuery;
     global $database;
@@ -656,6 +656,8 @@ function api_EVENTS_GET_ID() {
 
     global $database;
 
+    $session = null;
+
     switch (count($path)) {
         /** @noinspection PhpMissingBreakStatementInspection */
         case 1:
@@ -845,6 +847,8 @@ function api_EVENTS_POST_dispatch() {
                 ];
                 throw new BadRequestException($response);
             }
+
+        /** @noinspection PhpMissingBreakStatementInspection */
         case 2:
             $object2 = $path[1];
         case 1:
@@ -995,7 +999,7 @@ EOF;
                 ($options));
 
             if ($dialbackNumber === FALSE) { /* Handle error */
-                throw new NoDialbackNumberProvidedException();
+                throw new NoDialbackNumberProvidedException([]);
             }
 
             $sqlQuery = <<<EOF
