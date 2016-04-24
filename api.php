@@ -1005,7 +1005,7 @@ EOF;
                         longitude,
                         state,
                         returned_number
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         
 EOF;
 
