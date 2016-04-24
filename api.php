@@ -1038,7 +1038,7 @@ EOF;
                             [ 'd' => $jsonRequest['latitude'] ],
                             [ 'd' => $jsonRequest['longitude'] ],
                             [ 's' => $jsonRequest['state'] ],
-                            [ 'i' => intval($dialbackNumber) ]
+                            [ 's' => $dialbackNumber ]
                         ]
                     );
 
