@@ -15,6 +15,7 @@ $database          = null;
 // @todo Take this out of production code.
 /** @noinspection PhpIncludeInspection */
 if (file_exists('../config.inc.php')) {
+    /** @noinspection PhpIncludeInspection */
     require '../config.inc.php';
 }
 else {
@@ -27,7 +28,7 @@ main();
 exit();
 
 function main() {
-    global $API_PATH, $SQL_PREFIX, $CONNECTION_STRING, $requestPath, $requestQuery, $database;
+    global $API_PATH, $CONNECTION_STRING, $requestPath, $requestQuery, $database;
 
     // @todo This should probably be sanitized/validated against a whitelist like event creation and searching are.
     $method  = $_SERVER['REQUEST_METHOD'];
@@ -62,6 +63,7 @@ function main() {
 
     preg_match($pattern, $requestPath, $matches);
 
+    /** @noinspection PhpUnusedLocalVariableInspection */
     $path   = '';
     $object = '';
 
