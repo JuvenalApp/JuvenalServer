@@ -1450,6 +1450,7 @@ function sendResponse($response, $exitAfter = true) {
     header('Content-type: application/json');
     header('Access-Control-Allow-Origin: *');
     print json_encode($base);
+    
     if ($exitAfter) {
         exit();
     }
