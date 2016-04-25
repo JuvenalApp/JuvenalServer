@@ -1448,6 +1448,7 @@ function sendResponse($response, $exitAfter = true) {
 
     header("HTTP/1.1 {$base['status']['code']} {$base['status']['message']}");
     header("Content-type: application/json");
+    header("Access-Control-Allow-Origin: *");
     print json_encode($base);
     if ($exitAfter) {
         exit();
